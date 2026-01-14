@@ -57,6 +57,8 @@ services:
       EASYPAISA_STORE_ID: ${EASYPAISA_STORE_ID}
       EASYPAISA_HASH_KEY: ${EASYPAISA_HASH_KEY}
       EASYPAISA_API_URL: ${EASYPAISA_API_URL}
+    ports:
+      - "5000:5000"
     volumes:
       - uploads_data:/app/uploads
     networks:
