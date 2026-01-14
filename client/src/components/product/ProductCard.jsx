@@ -5,6 +5,7 @@ import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import { useLanguageStore, useAuthStore } from '../../store/useStore';
 import toast from 'react-hot-toast';
 import { authAPI } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ProductCard = ({ product }) => {
   const { t } = useTranslation();
@@ -84,7 +85,7 @@ const ProductCard = ({ product }) => {
       {/* Image Container */}
       <div className="relative overflow-hidden bg-gray-100">
         <img
-          src={product.images?.[0]?.url || 'https://placehold.co/400x400/FFC0CB/333?text=No+Image'}
+          src={getImageUrl(product.images?.[0]?.url) || 'https://placehold.co/400x400/FFC0CB/333?text=No+Image'}
           alt={name}
           className="product-image"
           loading="lazy"

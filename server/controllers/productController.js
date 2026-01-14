@@ -1,7 +1,26 @@
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Sale from '../models/Sale.js';
-import { paginate, getPaginationInfo, sanitizeSearchQuery } from '../utils/helpers.js';
+import { paginate, getPaginationInfo, sanitizeSearchQuery, getFullImageUrl } from '../utils/helpers.js';
+
+// Helper to transform product image URLs
+const transformProductImageUrls = (req, product) => {
+  if (product.mainImage) {
+    product.mainImage = getFullImageUrl(req, product.mainImage);
+  }
+  if (product.images && product.images.length > 0) {
+    product.images = product.images.map(img => getFullImageUrl(req, img));
+  }
+  if (product.colors && product.colors.length > 0) {
+    product.colors = product.colors.map(color => {
+      if (color.image) {
+        color.image = getFullImageUrl(req, color.image);
+      }
+      return color;
+    });
+  }
+  return product;
+};
 
 // @desc    Get all products
 // @route   GET /api/products
@@ -123,9 +142,11 @@ export const getProducts = async (req, res) => {
         .limit(limit);
     }
 
+    const transformedProducts = products.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: products,
+      data: transformedProducts,
       pagination: getPaginationInfo(total, page, limit)
     });
   } catch (error) {
@@ -155,9 +176,11 @@ export const getProduct = async (req, res) => {
     product.viewCount += 1;
     await product.save();
 
+    const transformedProduct = transformProductImageUrls(req, product.toObject());
+
     res.json({
       success: true,
-      data: product
+      data: transformedProduct
     });
   } catch (error) {
     res.status(500).json({
@@ -174,14 +197,14 @@ export const getFeaturedProducts = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
 
-    const products = await Product.find({ isActive: true, featured: true })
-      .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .limit(limit);
 
+    const transformedProducts = products.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: products
+      data: transformedProducts
     });
   } catch (error) {
     res.status(500).json({
@@ -203,9 +226,11 @@ export const getNewArrivals = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit);
 
+    const transformedProducts = products.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: products
+      data: transformedProducts
     });
   } catch (error) {
     res.status(500).json({
@@ -227,9 +252,11 @@ export const getBestSellers = async (req, res) => {
       .sort({ soldCount: -1 })
       .limit(limit);
 
+    const transformedProducts = products.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: products
+      data: transformedProducts
     });
   } catch (error) {
     res.status(500).json({
@@ -269,9 +296,11 @@ export const getSaleProducts = async (req, res) => {
     const total = saleProducts.length;
     const paginatedProducts = saleProducts.slice(skip, skip + limit);
 
+    const transformedProducts = paginatedProducts.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: paginatedProducts,
+      data: transformedProducts,
       pagination: getPaginationInfo(total, page, limit)
     });
   } catch (error) {
@@ -318,9 +347,11 @@ export const searchProducts = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    const transformedProducts = products.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: products,
+      data: transformedProducts,
       pagination: getPaginationInfo(total, page, limit)
     });
   } catch (error) {
@@ -358,9 +389,11 @@ export const getRelatedProducts = async (req, res) => {
       .populate('category', 'name slug')
       .limit(limit);
 
+    const transformedProducts = relatedProducts.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: relatedProducts
+      data: transformedProducts
     });
   } catch (error) {
     res.status(500).json({
@@ -399,9 +432,11 @@ export const getProductsByCategory = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    const transformedProducts = products.map(product => transformProductImageUrls(req, product.toObject()));
+
     res.json({
       success: true,
-      data: products,
+      data: transformedProducts,
       category,
       pagination: getPaginationInfo(total, page, limit)
     });

@@ -12,6 +12,7 @@ import { useAuthStore, useCartStore, useLanguageStore, useUIStore } from '../sto
 import { PageLoader } from '../components/common/Loader';
 import ProductCard from '../components/product/ProductCard';
 import ImageLightbox from '../components/common/ImageLightbox';
+import { getImageUrl } from '../utils/imageUrl';
 
 import 'swiper/css';
 import 'swiper/css/free-mode';

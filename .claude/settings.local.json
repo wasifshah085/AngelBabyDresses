@@ -9,7 +9,9 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(xargs:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(sshpass -p 'Wasif@054555' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@72.62.196.22 \"echo ''Connection successful'' && uname -a\")",
+      "Bash(sshpass -p 'Wasif@054555' ssh -o StrictHostKeyChecking=no root@72.62.196.22 \"which docker && which nginx && which git\")"
     ]
   }
 }
