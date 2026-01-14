@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: angelbaby_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: angel-baby-dresses
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./deployment/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - angelbaby_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Node.js Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: angelbaby_backend
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-angelbaby}:${MONGO_APP_PASSWORD}@mongodb:27017/angel-baby-dresses?authSource=angel-baby-dresses
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE: ${JWT_EXPIRE:-30d}
+      CLIENT_URL: ${CLIENT_URL:-https://angelbabydresses.com}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      FROM_EMAIL: ${FROM_EMAIL}
+      FROM_NAME: ${FROM_NAME}
+      JAZZCASH_MERCHANT_ID: ${JAZZCASH_MERCHANT_ID}
+      JAZZCASH_PASSWORD: ${JAZZCASH_PASSWORD}
+      JAZZCASH_INTEGRITY_SALT: ${JAZZCASH_INTEGRITY_SALT}
+      JAZZCASH_RETURN_URL: ${JAZZCASH_RETURN_URL}
+      JAZZCASH_API_URL: ${JAZZCASH_API_URL}
+      EASYPAISA_STORE_ID: ${EASYPAISA_STORE_ID}
+      EASYPAISA_HASH_KEY: ${EASYPAISA_HASH_KEY}
+      EASYPAISA_API_URL: ${EASYPAISA_API_URL}
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - angelbaby_network
+    labels:
+      - "com.angelbaby.project=angel-baby-dresses"
+      - "com.angelbaby.service=backend"
+
+  # Watchtower for automatic updates (optional - enable if using Docker Hub)
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   container_name: angelbaby_watchtower
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     WATCHTOWER_CLEANUP: "true"
+  #     WATCHTOWER_POLL_INTERVAL: 300
+  #     WATCHTOWER_LABEL_ENABLE: "true"
+  #   labels:
+  #     - "com.centurylinklabs.watchtower.enable=true"
+
+networks:
+  angelbaby_network:
+    name: angelbaby_network
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    name: angelbaby_mongodb_data
+  mongodb_config:
+    name: angelbaby_mongodb_config
+  uploads_data:
+    name: angelbaby_uploads_data

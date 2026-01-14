@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(lsof:*)",
+      "Bash(cat /tmp/claude/-root-AngelBabyDresses/tasks/beced43.output)",
+      "Bash(mongod:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(xargs:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
