@@ -1,17 +1,5 @@
 import Category from '../models/Category.js';
 import Product from '../models/Product.js';
-import { getFullImageUrl } from '../utils/helpers.js';
-
-// Helper to transform category image URLs
-const transformCategoryImageUrls = (req, category) => {
-  if (category.image) {
-    category.image = getFullImageUrl(req, category.image);
-  }
-  if (category.subcategories && category.subcategories.length > 0) {
-    category.subcategories = category.subcategories.map(subcat => transformCategoryImageUrls(req, subcat));
-  }
-  return category;
-};
 
 // @desc    Get all categories
 // @route   GET /api/categories
@@ -19,13 +7,16 @@ const transformCategoryImageUrls = (req, category) => {
 export const getCategories = async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true, parent: null })
+      .populate({
+        path: 'subcategories',
+        match: { isActive: true },
+        options: { sort: { sortOrder: 1 } }
+      })
       .sort({ sortOrder: 1 });
-
-    const transformedCategories = categories.map(cat => transformCategoryImageUrls(req, cat.toObject()));
 
     res.json({
       success: true,
-      data: transformedCategories
+      data: categories
     });
   } catch (error) {
     res.status(500).json({
@@ -54,11 +45,9 @@ export const getCategory = async (req, res) => {
       });
     }
 
-    const transformedCategory = transformCategoryImageUrls(req, category.toObject());
-
     res.json({
       success: true,
-      data: transformedCategory
+      data: category
     });
   } catch (error) {
     res.status(500).json({
@@ -77,11 +66,9 @@ export const getAllCategories = async (req, res) => {
       .populate('parent', 'name slug')
       .sort({ sortOrder: 1 });
 
-    const transformedCategories = categories.map(cat => transformCategoryImageUrls(req, cat.toObject()));
-
     res.json({
       success: true,
-      data: transformedCategories
+      data: categories
     });
   } catch (error) {
     res.status(500).json({

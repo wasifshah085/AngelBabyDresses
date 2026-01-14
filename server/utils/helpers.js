@@ -49,21 +49,3 @@ export const sanitizeSearchQuery = (query) => {
 export const isValidObjectId = (id) => {
   return /^[0-9a-fA-F]{24}$/.test(id);
 };
-
-// Get full image URL
-export const getFullImageUrl = (req, relativePath) => {
-  if (!relativePath) return null;
-
-  // Use BACKEND_URL from environment if available
-  if (process.env.BACKEND_URL) {
-    return `${process.env.BACKEND_URL}${relativePath}`;
-  }
-
-  // Fallback to constructing URL from request host
-  if (req && req.protocol && req.get('host')) {
-    return `${req.protocol}://${req.get('host')}${relativePath}`;
-  }
-
-  return relativePath; // Return relative path if full URL cannot be constructed
-};
-
