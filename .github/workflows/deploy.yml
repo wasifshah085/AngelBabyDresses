@@ -79,10 +79,24 @@ jobs:
             echo "=== Starting deployment ==="
             cd /var/www/angel-baby-dresses
 
+            # Backup uploads folder before git operations
+            echo "Backing up uploads folder..."
+            if [ -d "server/uploads" ]; then
+              cp -r server/uploads /tmp/angel-baby-uploads-backup
+            fi
+
             # Pull latest changes
             echo "Pulling latest changes..."
             git fetch origin
-            git reset --hard origin/main || git reset --hard origin/master
+            git pull origin main || git pull origin master
+
+            # Restore uploads folder after git operations
+            echo "Restoring uploads folder..."
+            if [ -d "/tmp/angel-baby-uploads-backup" ]; then
+              mkdir -p server/uploads
+              cp -r /tmp/angel-baby-uploads-backup/* server/uploads/ 2>/dev/null || true
+              rm -rf /tmp/angel-baby-uploads-backup
+            fi
 
             # Load environment variables
             if [ -f .env.production ]; then
