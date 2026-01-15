@@ -30,11 +30,25 @@ echo -e "${BLUE}  Mode: ${DEPLOY_MODE}                   ${NC}"
 echo -e "${BLUE}==========================================${NC}"
 echo ""
 
-# Pull latest changes from git
+# Pull latest changes from git (preserve uploads folder)
 if [ -d ".git" ]; then
     print_status "Pulling latest changes from git..."
+
+    # Backup uploads folder before git operations
+    if [ -d "server/uploads" ]; then
+        print_status "Backing up uploads folder..."
+        cp -r server/uploads /tmp/angel-baby-uploads-backup
+    fi
+
     git fetch origin
-    git reset --hard origin/main 2>/dev/null || git reset --hard origin/master
+    git pull origin main 2>/dev/null || git pull origin master
+
+    # Restore uploads folder after git operations
+    if [ -d "/tmp/angel-baby-uploads-backup" ]; then
+        print_status "Restoring uploads folder..."
+        cp -r /tmp/angel-baby-uploads-backup/* server/uploads/ 2>/dev/null || true
+        rm -rf /tmp/angel-baby-uploads-backup
+    fi
 fi
 
 # Load environment variables

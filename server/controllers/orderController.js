@@ -11,7 +11,13 @@ import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappServi
 // @access  Private
 export const createOrder = async (req, res) => {
   try {
-    const { shippingAddress, paymentMethod, notes } = req.body;
+    // Parse shippingAddress from JSON string if sent as FormData
+    let shippingAddress = req.body.shippingAddress;
+    if (typeof shippingAddress === 'string') {
+      shippingAddress = JSON.parse(shippingAddress);
+    }
+    const { paymentMethod, notes } = req.body;
+    const screenshot = req.file; // Payment screenshot from multer
 
     // Get cart
     const cart = await Cart.findOne({ user: req.user._id })
@@ -24,7 +30,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Validate stock and prepare order items
+    // Prepare order items (made-to-order model - no stock validation)
     const orderItems = [];
     for (const item of cart.items) {
       const product = item.product;
@@ -33,22 +39,6 @@ export const createOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: `Product ${item.product.name?.en || 'Unknown'} is no longer available`
-        });
-      }
-
-      // Check stock for the specific age range
-      let availableStock = product.stock;
-      if (product.agePricing && product.agePricing.length > 0 && item.ageRange) {
-        const agePriceData = product.agePricing.find(ap => ap.ageRange === item.ageRange);
-        if (agePriceData) {
-          availableStock = agePriceData.stock || 0;
-        }
-      }
-
-      if (availableStock < item.quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock for ${product.name.en} (${item.ageRange || 'selected age'})`
         });
       }
 
@@ -92,7 +82,50 @@ export const createOrder = async (req, res) => {
     const advanceAmount = Math.ceil(total / 2);
     const finalAmount = total - advanceAmount;
 
-    // Create order
+    // Handle screenshot upload if provided
+    let screenshotData = null;
+    if (screenshot) {
+      const { cloudinary } = await import('../config/cloudinary.js');
+
+      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder') {
+        const result = await cloudinary.uploader.upload(
+          `data:${screenshot.mimetype};base64,${screenshot.buffer.toString('base64')}`,
+          { folder: 'angel-baby-dresses/payments' }
+        );
+        screenshotData = {
+          url: result.secure_url,
+          publicId: result.public_id
+        };
+      } else {
+        // Local storage fallback
+        const fs = await import('fs');
+        const path = await import('path');
+        const crypto = await import('crypto');
+        const { fileURLToPath } = await import('url');
+
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const uploadsDir = path.join(__dirname, '..', 'uploads', 'payments');
+
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+
+        const ext = path.extname(screenshot.originalname).toLowerCase();
+        const uniqueName = `${crypto.randomBytes(16).toString('hex')}${ext}`;
+        const filePath = path.join(uploadsDir, uniqueName);
+
+        fs.writeFileSync(filePath, screenshot.buffer);
+
+        const baseUrl = process.env.API_URL || '';
+        screenshotData = {
+          url: `${baseUrl}/uploads/payments/${uniqueName}`,
+          publicId: `local_payments_${uniqueName}`
+        };
+      }
+    }
+
+    // Create order with screenshot if provided
     const order = await Order.create({
       orderNumber,
       user: req.user._id,
@@ -107,13 +140,15 @@ export const createOrder = async (req, res) => {
       notes,
       advancePayment: {
         amount: advanceAmount,
-        status: 'pending'
+        status: screenshotData ? 'submitted' : 'pending',
+        screenshot: screenshotData,
+        submittedAt: screenshotData ? new Date() : null
       },
       finalPayment: {
         amount: finalAmount,
         status: 'pending'
       },
-      paymentStatus: 'pending_advance'
+      paymentStatus: screenshotData ? 'advance_submitted' : 'pending_advance'
     });
 
     // Update product sold count (no stock tracking for made-to-order)

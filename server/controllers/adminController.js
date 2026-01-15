@@ -47,7 +47,7 @@ const saveFileLocally = async (file, folder) => {
   // Build absolute URL for production, relative for development
   const baseUrl = process.env.NODE_ENV === 'production' && process.env.API_URL
     ? process.env.API_URL
-    : '';
+    : `http://localhost:${process.env.PORT || 5000}`;
 
   return {
     url: `${baseUrl}/uploads/${folder}/${uniqueName}`,
@@ -690,22 +690,42 @@ export const getOrders = async (req, res) => {
     const { status, paymentStatus, search, startDate, endDate } = req.query;
 
     const query = {};
+    const andConditions = [];
 
     if (status) query.status = status;
-    if (paymentStatus) query.paymentStatus = paymentStatus;
+    if (paymentStatus) {
+      if (paymentStatus === 'needs_review') {
+        // Special filter: orders with payments awaiting review
+        andConditions.push({
+          $or: [
+            { 'advancePayment.status': 'submitted' },
+            { 'finalPayment.status': 'submitted' }
+          ]
+        });
+      } else {
+        query.paymentStatus = paymentStatus;
+      }
+    }
 
     if (search) {
-      query.$or = [
-        { orderNumber: { $regex: search, $options: 'i' } },
-        { 'shippingAddress.fullName': { $regex: search, $options: 'i' } },
-        { 'shippingAddress.phone': { $regex: search, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { orderNumber: { $regex: search, $options: 'i' } },
+          { 'shippingAddress.fullName': { $regex: search, $options: 'i' } },
+          { 'shippingAddress.phone': { $regex: search, $options: 'i' } }
+        ]
+      });
     }
 
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
       if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    // Combine $and conditions if any exist
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     const total = await Order.countDocuments(query);

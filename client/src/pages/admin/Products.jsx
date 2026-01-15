@@ -89,7 +89,6 @@ const Products = () => {
                 <option value="all">{t('admin.allProducts')}</option>
                 <option value="active">{t('admin.active')}</option>
                 <option value="inactive">{t('admin.inactive')}</option>
-                <option value="low-stock">{t('admin.lowStock')}</option>
                 <option value="featured">{t('admin.featured')}</option>
               </select>
             </div>
@@ -110,9 +109,6 @@ const Products = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
                     {t('admin.price')}
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
-                    {t('admin.stock')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
                     {t('admin.status')}
@@ -173,14 +169,6 @@ const Products = () => {
                           </p>
                         )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-medium ${
-                        product.stock <= 5 ? 'text-red-600' :
-                        product.stock <= 20 ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
-                        {product.stock}
-                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${

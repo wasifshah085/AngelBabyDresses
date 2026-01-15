@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { FiSearch, FiFilter, FiEye } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiEye, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
@@ -18,6 +18,26 @@ const statusColors = {
   cancelled: 'bg-red-100 text-red-800'
 };
 
+const paymentStatusColors = {
+  pending_advance: 'bg-gray-100 text-gray-700',
+  advance_submitted: 'bg-orange-100 text-orange-700',
+  advance_approved: 'bg-blue-100 text-blue-700',
+  pending_final: 'bg-yellow-100 text-yellow-700',
+  final_submitted: 'bg-orange-100 text-orange-700',
+  fully_paid: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700'
+};
+
+const paymentStatusLabels = {
+  pending_advance: 'Awaiting Advance',
+  advance_submitted: 'Review Advance',
+  advance_approved: 'Advance Paid',
+  pending_final: 'Awaiting Final',
+  final_submitted: 'Review Final',
+  fully_paid: 'Fully Paid',
+  rejected: 'Rejected'
+};
+
 const Orders = () => {
   const { t } = useTranslation();
   const { language } = useLanguageStore();
@@ -26,10 +46,16 @@ const Orders = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-orders', page, search, statusFilter],
-    queryFn: () => managementAPI.getOrders({ page, search, status: statusFilter !== 'all' ? statusFilter : undefined })
+    queryKey: ['admin-orders', page, search, statusFilter, paymentFilter],
+    queryFn: () => managementAPI.getOrders({
+      page,
+      search,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      paymentStatus: paymentFilter !== 'all' ? paymentFilter : undefined
+    })
   });
 
   const updateStatusMutation = useMutation({
@@ -88,6 +114,20 @@ const Orders = () => {
                 <option value="cancelled">{t('orders.status.cancelled')}</option>
               </select>
             </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                className="input"
+              >
+                <option value="all">All Payments</option>
+                <option value="needs_review">⚠️ Needs Review</option>
+                <option value="pending_advance">Awaiting Advance</option>
+                <option value="advance_approved">Advance Paid</option>
+                <option value="pending_final">Awaiting Final</option>
+                <option value="fully_paid">Fully Paid</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -111,6 +151,9 @@ const Orders = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
                     {t('admin.status')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
+                    Payment
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
                     {t('admin.date')}
@@ -153,13 +196,27 @@ const Orders = () => {
                         <option value="cancelled">{t('orders.status.cancelled')}</option>
                       </select>
                     </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1">
+                        {(order.advancePayment?.status === 'submitted' || order.finalPayment?.status === 'submitted') && (
+                          <FiAlertCircle className="w-4 h-4 text-orange-500" />
+                        )}
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100 text-gray-700'}`}>
+                          {paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-gray-600">
                       {new Date(order.createdAt).toLocaleDateString(language === 'ur' ? 'ur-PK' : 'en-US')}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link
                         to={`/admin/orders/${order._id}`}
-                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-primary-600 inline-flex"
+                        className={`p-2 hover:bg-gray-100 rounded-lg inline-flex ${
+                          (order.advancePayment?.status === 'submitted' || order.finalPayment?.status === 'submitted')
+                            ? 'text-orange-500 hover:text-orange-600 bg-orange-50'
+                            : 'text-gray-600 hover:text-primary-600'
+                        }`}
                       >
                         <FiEye className="w-4 h-4" />
                       </Link>

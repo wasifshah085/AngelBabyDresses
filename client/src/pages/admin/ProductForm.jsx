@@ -60,7 +60,6 @@ const ProductForm = () => {
         price: product.price,
         salePrice: product.salePrice,
         category: product.category?._id,
-        stock: product.stock,
         sku: product.sku,
         featured: product.featured,
         isActive: product.isActive
@@ -113,7 +112,7 @@ const ProductForm = () => {
       toast.error('This age range is already added');
       return;
     }
-    setAgePricing(prev => [...prev, { ageRange, price: '', salePrice: '', stock: 0 }]);
+    setAgePricing(prev => [...prev, { ageRange, price: '', salePrice: '' }]);
   };
 
   const removeAgePricing = (index) => {
@@ -129,7 +128,7 @@ const ProductForm = () => {
   const addAllAges = () => {
     const newAgePricing = AGE_RANGES.filter(
       age => !agePricing.find(ap => ap.ageRange === age)
-    ).map(ageRange => ({ ageRange, price: '', salePrice: '', stock: 0 }));
+    ).map(ageRange => ({ ageRange, price: '', salePrice: '' }));
     setAgePricing(prev => [...prev, ...newAgePricing]);
   };
 
@@ -181,13 +180,11 @@ const ProductForm = () => {
       price: Number(data.price),
       salePrice: data.salePrice ? Number(data.salePrice) : null,
       category: data.category || null,
-      stock: Number(data.stock) || 0,
       sku: data.sku,
       agePricing: validAgePricing.map(ap => ({
         ageRange: ap.ageRange,
         price: Number(ap.price),
-        salePrice: ap.salePrice ? Number(ap.salePrice) : null,
-        stock: Number(ap.stock) || 0
+        salePrice: ap.salePrice ? Number(ap.salePrice) : null
       })),
       colors: colors.filter(c => c.name),
       featured: data.featured || false,
@@ -359,7 +356,7 @@ const ProductForm = () => {
             </div>
 
             {/* Base Price (for display purposes) */}
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Base Price (Rs.) *
@@ -383,19 +380,6 @@ const ProductForm = () => {
                   type="number"
                   {...register('salePrice', { min: 0 })}
                   className="input"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Stock (auto-calculated)
-                </label>
-                <input
-                  type="number"
-                  {...register('stock')}
-                  className="input bg-gray-100"
-                  value={agePricing.reduce((sum, ap) => sum + (Number(ap.stock) || 0), 0)}
-                  readOnly
                 />
               </div>
             </div>
@@ -450,16 +434,15 @@ const ProductForm = () => {
               {agePricing.length > 0 && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-700 px-2">
-                    <div className="col-span-3">Age Range</div>
+                    <div className="col-span-4">Age Range</div>
                     <div className="col-span-3">Price (Rs.)</div>
-                    <div className="col-span-3">Sale Price</div>
-                    <div className="col-span-2">Stock</div>
+                    <div className="col-span-4">Sale Price</div>
                     <div className="col-span-1"></div>
                   </div>
 
                   {agePricing.map((ap, index) => (
                     <div key={ap.ageRange} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded-lg">
-                      <div className="col-span-3 font-medium text-gray-800">
+                      <div className="col-span-4 font-medium text-gray-800">
                         {ap.ageRange}
                       </div>
                       <div className="col-span-3">
@@ -472,23 +455,13 @@ const ProductForm = () => {
                           min="0"
                         />
                       </div>
-                      <div className="col-span-3">
+                      <div className="col-span-4">
                         <input
                           type="number"
                           value={ap.salePrice || ''}
                           onChange={(e) => updateAgePricing(index, 'salePrice', e.target.value)}
                           className="input py-2"
                           placeholder="Sale"
-                          min="0"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          value={ap.stock}
-                          onChange={(e) => updateAgePricing(index, 'stock', e.target.value)}
-                          className="input py-2"
-                          placeholder="Stock"
                           min="0"
                         />
                       </div>

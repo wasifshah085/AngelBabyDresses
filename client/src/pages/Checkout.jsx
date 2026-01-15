@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiMapPin, FiCreditCard, FiCheck, FiInfo } from 'react-icons/fi';
+import { FiMapPin, FiCreditCard, FiCheck, FiInfo, FiUpload, FiX, FiImage } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { cartAPI, ordersAPI, authAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore } from '../store/useStore';
@@ -24,6 +24,9 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('easypaisa');
   const [loading, setLoading] = useState(false);
+  const [paymentScreenshot, setPaymentScreenshot] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   const {
     register,
@@ -100,21 +103,51 @@ const Checkout = () => {
     setStep(2);
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(t('validation.imageOnly') || 'Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(t('validation.fileTooLarge') || 'File size must be less than 5MB');
+        return;
+      }
+      setPaymentScreenshot(file);
+      setScreenshotPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const clearScreenshot = () => {
+    setPaymentScreenshot(null);
+    setScreenshotPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error(t('validation.selectAddress'));
       return;
     }
 
+    if (!paymentScreenshot) {
+      toast.error(t('validation.uploadScreenshot') || 'Please upload payment screenshot');
+      return;
+    }
+
     setLoading(true);
 
-    const orderData = {
-      shippingAddress: selectedAddress,
-      paymentMethod,
-      notes: ''
-    };
+    // Create FormData to send file with order
+    const formData = new FormData();
+    formData.append('shippingAddress', JSON.stringify(selectedAddress));
+    formData.append('paymentMethod', paymentMethod);
+    formData.append('notes', '');
+    formData.append('screenshot', paymentScreenshot);
 
-    createOrderMutation.mutate(orderData);
+    createOrderMutation.mutate(formData);
   };
 
   if (cartLoading) return <PageLoader />;
@@ -376,6 +409,54 @@ const Checkout = () => {
                   ))}
                 </div>
 
+                {/* Screenshot Upload Section */}
+                <div className="mt-6 pt-6 border-t">
+                  <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <FiImage className="w-5 h-5 text-primary-500" />
+                    {t('checkout.uploadPaymentProof') || 'Upload Payment Screenshot'} *
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {t('checkout.uploadInstructions') || `Please make the advance payment of Rs. ${advanceAmount.toLocaleString()} to the account above, then upload the screenshot.`}
+                  </p>
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+
+                  {screenshotPreview ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={screenshotPreview}
+                        alt="Payment screenshot"
+                        className="max-h-48 rounded-lg border shadow-sm"
+                      />
+                      <button
+                        onClick={clearScreenshot}
+                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
+                      <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                        <FiCheck className="w-4 h-4" />
+                        {t('checkout.screenshotUploaded') || 'Screenshot uploaded'}
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                    >
+                      <FiUpload className="w-8 h-8 text-gray-400" />
+                      <span className="text-gray-600 font-medium">{t('checkout.clickToUpload') || 'Click to upload screenshot'}</span>
+                      <span className="text-sm text-gray-400">{t('checkout.imageFormats') || 'PNG, JPG up to 5MB'}</span>
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex gap-4 mt-6">
                   <button
                     onClick={() => setStep(1)}
@@ -384,7 +465,13 @@ const Checkout = () => {
                     {t('common.back')}
                   </button>
                   <button
-                    onClick={() => setStep(3)}
+                    onClick={() => {
+                      if (!paymentScreenshot) {
+                        toast.error(t('validation.uploadScreenshot') || 'Please upload payment screenshot first');
+                        return;
+                      }
+                      setStep(3);
+                    }}
                     className="btn btn-primary flex-1"
                   >
                     {t('checkout.reviewOrder')}
@@ -449,16 +536,34 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Payment Info Box */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-                  <h3 className="font-heading font-semibold text-yellow-800 mb-3">
-                    {t('checkout.paymentInstructions') || 'Payment Instructions'}
+                {/* Payment Screenshot Preview */}
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h2 className="text-lg font-heading font-semibold mb-4 flex items-center gap-2">
+                    <FiImage className="w-5 h-5 text-primary-500" />
+                    {t('checkout.paymentScreenshot') || 'Payment Screenshot'}
+                  </h2>
+                  {screenshotPreview && (
+                    <img
+                      src={screenshotPreview}
+                      alt="Payment screenshot"
+                      className="max-h-32 rounded-lg border"
+                    />
+                  )}
+                  <button onClick={() => setStep(2)} className="text-primary-600 text-sm mt-2">
+                    {t('common.edit')}
+                  </button>
+                </div>
+
+                {/* What happens next */}
+                <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                  <h3 className="font-heading font-semibold text-green-800 mb-3">
+                    {t('checkout.whatHappensNext') || 'What Happens Next?'}
                   </h3>
-                  <div className="text-sm text-yellow-800 space-y-2">
-                    <p>{t('checkout.paymentStep1') || '1. After placing order, send 50% advance payment to the account shown'}</p>
-                    <p>{t('checkout.paymentStep2') || '2. Upload screenshot of payment on the order page'}</p>
-                    <p>{t('checkout.paymentStep3') || '3. Once verified, we will start making your order'}</p>
-                    <p>{t('checkout.paymentStep4') || '4. When ready, pay remaining 50% and receive your order'}</p>
+                  <div className="text-sm text-green-800 space-y-2">
+                    <p>{t('checkout.nextStep1') || '1. Your payment will be verified by our team (usually within a few hours)'}</p>
+                    <p>{t('checkout.nextStep2') || '2. Once approved, we will start making your order'}</p>
+                    <p>{t('checkout.nextStep3') || '3. When ready, you will be notified to pay the remaining 50%'}</p>
+                    <p>{t('checkout.nextStep4') || '4. After final payment, your order will be shipped'}</p>
                   </div>
                 </div>
 

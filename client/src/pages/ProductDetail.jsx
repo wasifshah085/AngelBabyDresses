@@ -111,8 +111,7 @@ const ProductDetail = () => {
       return {
         price: product?.price || 0,
         salePrice: product?.salePrice,
-        currentPrice: product?.salePrice || product?.price || 0,
-        stock: product?.stock || 0
+        currentPrice: product?.salePrice || product?.price || 0
       };
     }
 
@@ -122,8 +121,7 @@ const ProductDetail = () => {
         return {
           price: agePriceData.price,
           salePrice: agePriceData.salePrice,
-          currentPrice: agePriceData.salePrice || agePriceData.price,
-          stock: agePriceData.stock || 0
+          currentPrice: agePriceData.salePrice || agePriceData.price
         };
       }
     }
@@ -131,8 +129,7 @@ const ProductDetail = () => {
     return {
       price: product.price,
       salePrice: product.salePrice,
-      currentPrice: product.salePrice || product.price,
-      stock: product.stock || 0
+      currentPrice: product.salePrice || product.price
     };
   }, [product, selectedAge]);
 
@@ -160,11 +157,6 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!selectedAge) {
       toast.error(t('validation.selectAge', { defaultValue: 'Please select child\'s age' }));
-      return;
-    }
-
-    if (selectedPricing.stock === 0) {
-      toast.error(t('common.outOfStock'));
       return;
     }
 
@@ -353,28 +345,19 @@ const ProductDetail = () => {
                 {t('product.selectAge', { defaultValue: "Select Child's Age" })} *
               </h3>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {availableAges.map((age) => {
-                  const ageData = product.agePricing?.find(ap => ap.ageRange === age);
-                  const isOutOfStock = ageData && ageData.stock === 0;
-
-                  return (
-                    <button
-                      key={age}
-                      onClick={() => !isOutOfStock && setSelectedAge(age)}
-                      disabled={isOutOfStock}
-                      className={`px-3 py-2 text-sm border rounded-lg transition-colors ${
-                        selectedAge === age
-                          ? 'bg-primary-500 text-white border-primary-500'
-                          : isOutOfStock
-                          ? 'border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed'
-                          : 'border-gray-300 text-gray-700 hover:border-primary-400'
-                      }`}
-                    >
-                      {age}
-                      {isOutOfStock && <span className="block text-xs">(Out of stock)</span>}
-                    </button>
-                  );
-                })}
+                {availableAges.map((age) => (
+                  <button
+                    key={age}
+                    onClick={() => setSelectedAge(age)}
+                    className={`px-3 py-2 text-sm border rounded-lg transition-colors ${
+                      selectedAge === age
+                        ? 'bg-primary-500 text-white border-primary-500'
+                        : 'border-gray-300 text-gray-700 hover:border-primary-400'
+                    }`}
+                  >
+                    {age}
+                  </button>
+                ))}
               </div>
               {selectedAge && (
                 <p className="text-sm text-primary-600 mt-2">
@@ -421,19 +404,15 @@ const ProductDetail = () => {
                   </button>
                   <span className="w-12 text-center font-medium">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(Math.min(selectedPricing.stock || 10, quantity + 1))}
+                    onClick={() => setQuantity(Math.min(10, quantity + 1))}
                     className="p-3 hover:bg-gray-100 transition-colors"
                   >
                     <FiPlus className="w-4 h-4" />
                   </button>
                 </div>
-                {selectedAge && (
-                  <span className="text-sm text-gray-500">
-                    {selectedPricing.stock > 0
-                      ? `${selectedPricing.stock} ${t('common.inStock')}`
-                      : t('common.outOfStock')}
-                  </span>
-                )}
+                <span className="text-sm text-green-600">
+                  {t('common.madeToOrder', { defaultValue: 'Made to order' })}
+                </span>
               </div>
             </div>
 
@@ -441,7 +420,7 @@ const ProductDetail = () => {
             <div className="flex gap-4">
               <button
                 onClick={handleAddToCart}
-                disabled={!selectedAge || selectedPricing.stock === 0 || addToCartMutation.isPending}
+                disabled={!selectedAge || addToCartMutation.isPending}
                 className="btn btn-primary flex-1 py-4 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiShoppingCart className="w-5 h-5 mr-2" />

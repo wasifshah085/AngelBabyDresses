@@ -5,6 +5,7 @@ import { FiFacebook, FiInstagram, FiTwitter, FiYoutube } from 'react-icons/fi';
 import { FaTiktok, FaWhatsapp } from 'react-icons/fa';
 import { settingsAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -80,7 +81,7 @@ const Footer = () => {
             <div className="flex items-center gap-2 mb-4">
               {settings?.logo?.url && (
                 <img
-                  src={settings.logo.url}
+                  src={getImageUrl(settings.logo.url)}
                   alt={settings.siteName?.[language] || settings.siteName?.en || 'Logo'}
                   className="h-10 w-auto object-contain"
                 />

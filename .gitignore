@@ -46,3 +46,7 @@ coverage/
 # Misc
 .cache/
 *.pem
+
+# Server uploads (user-uploaded files - preserve on deployment)
+server/uploads/
+!server/uploads/.gitkeep

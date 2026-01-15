@@ -96,9 +96,9 @@ const productSchema = new mongoose.Schema({
       required: true
     }
   }],
+  // Stock field kept for backwards compatibility but not used (made-to-order model)
   stock: {
     type: Number,
-    required: [true, 'Please provide stock quantity'],
     min: [0, 'Stock cannot be negative'],
     default: 0
   },
@@ -201,12 +201,9 @@ productSchema.virtual('currentPrice').get(function() {
 });
 
 // Virtual for in stock status
+// Made-to-order model: products are always available
 productSchema.virtual('inStock').get(function() {
-  // Check if any age variant has stock, or fall back to main stock
-  if (this.agePricing && this.agePricing.length > 0) {
-    return this.agePricing.some(ap => ap.stock > 0);
-  }
-  return this.stock > 0;
+  return true;
 });
 
 // Virtual for total stock across all age variants

@@ -42,10 +42,6 @@ const ProductCard = ({ product }) => {
       : 0;
   }
 
-  // Check stock - use inStock virtual if available, otherwise check stock field or totalStock
-  const isOutOfStock = product.inStock === false ||
-    (hasAgePricing ? (product.totalStock === 0) : (product.stock === 0));
-
   const { data: wishlistData } = useQuery({
     queryKey: ['wishlist'],
     queryFn: () => authAPI.getWishlist(),
@@ -192,10 +188,6 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        {/* Stock Status */}
-        {isOutOfStock && (
-          <p className="text-red-500 text-sm mt-2">{t('common.outOfStock')}</p>
-        )}
       </div>
     </Link>
   );

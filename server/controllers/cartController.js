@@ -42,8 +42,7 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // Check stock for the specific age range
-    let availableStock = product.stock;
+    // Get price for the specific age range
     let price = product.salePrice && product.salePrice < product.price
       ? product.salePrice
       : product.price;
@@ -51,7 +50,6 @@ export const addToCart = async (req, res) => {
     if (product.agePricing && product.agePricing.length > 0 && ageRange) {
       const agePriceData = product.agePricing.find(ap => ap.ageRange === ageRange);
       if (agePriceData) {
-        availableStock = agePriceData.stock || 0;
         price = agePriceData.salePrice || agePriceData.price;
       }
     }
@@ -59,13 +57,6 @@ export const addToCart = async (req, res) => {
     // Use client price if provided (ensures consistency with frontend calculation)
     if (clientPrice) {
       price = clientPrice;
-    }
-
-    if (availableStock < quantity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient stock'
-      });
     }
 
     // Get or create cart
@@ -135,24 +126,7 @@ export const updateCartItem = async (req, res) => {
       });
     }
 
-    // Check stock for the specific age range
-    const product = await Product.findById(item.product);
-    let availableStock = product.stock;
-
-    if (product.agePricing && product.agePricing.length > 0 && item.ageRange) {
-      const agePriceData = product.agePricing.find(ap => ap.ageRange === item.ageRange);
-      if (agePriceData) {
-        availableStock = agePriceData.stock || 0;
-      }
-    }
-
-    if (availableStock < quantity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient stock'
-      });
-    }
-
+    // Made-to-order model: no stock validation needed
     item.quantity = quantity;
     await cart.save();
     await cart.populate('items.product', 'name slug images price salePrice stock agePricing');

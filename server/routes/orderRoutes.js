@@ -32,7 +32,7 @@ router.get('/payment-accounts', getPaymentAccounts);
 // Protected routes
 router.use(protect);
 
-router.post('/', createOrderValidation, validate, createOrder);
+router.post('/', upload.single('screenshot'), createOrder);
 router.get('/my-orders', getMyOrders);
 router.get('/:id', getOrder);
 router.put('/:id/cancel', cancelOrder);

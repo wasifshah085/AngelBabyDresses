@@ -18,7 +18,8 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import customDesignRoutes from './routes/customDesignRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
+// Payment gateway routes disabled - using manual payment with screenshot upload
+// import paymentRoutes from './routes/paymentRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import Setting from './models/Setting.js';
@@ -92,7 +93,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/custom-design', customDesignRoutes);
-app.use('/api/payments', paymentRoutes);
+// app.use('/api/payments', paymentRoutes); // Disabled - manual payment system in use
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
 

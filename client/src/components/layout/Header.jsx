@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FiSearch, FiHeart, FiShoppingBag, FiUser, FiMenu, FiGlobe } from 'react-icons/fi';
 import { useAuthStore, useCartStore, useUIStore, useLanguageStore } from '../../store/useStore';
 import { settingsAPI, cartAPI } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 import '../../styles/marquee.css';
 
 const Header = () => {
@@ -73,7 +74,7 @@ const Header = () => {
           <Link to="/" className="flex items-center gap-2">
             {settings?.logo?.url ? (
               <img
-                src={settings.logo.url}
+                src={getImageUrl(settings.logo.url)}
                 alt={settings.siteName?.[language] || settings.siteName?.en || 'Angel Baby Dresses'}
                 className="h-10 lg:h-12 w-auto object-contain"
               />

@@ -90,7 +90,15 @@ export const cartAPI = {
 
 // Orders API
 export const ordersAPI = {
-  create: (data) => api.post('/orders', data),
+  create: (data) => {
+    // If FormData (with screenshot), send as multipart
+    if (data instanceof FormData) {
+      return api.post('/orders', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.post('/orders', data);
+  },
   getMyOrders: () => api.get('/orders/my-orders'),
   getById: (id) => api.get(`/orders/${id}`),
   track: (orderNumber) => api.get(`/orders/track/${orderNumber}`),

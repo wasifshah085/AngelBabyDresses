@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FiX, FiChevronRight, FiUser, FiHeart, FiGlobe } from 'react-icons/fi';
 import { useUIStore, useAuthStore, useLanguageStore } from '../../store/useStore';
 import { settingsAPI } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const MobileMenu = () => {
   const { t, i18n } = useTranslation();
@@ -56,7 +57,7 @@ const MobileMenu = () => {
           <div className="flex items-center gap-2">
             {settings?.logo?.url && (
               <img
-                src={settings.logo.url}
+                src={getImageUrl(settings.logo.url)}
                 alt={settings.siteName?.[language] || settings.siteName?.en || 'Logo'}
                 className="h-8 w-auto object-contain"
               />
