@@ -5,10 +5,14 @@ import {
   getMyOrders,
   getOrder,
   trackOrder,
-  cancelOrder
+  cancelOrder,
+  submitAdvancePayment,
+  submitFinalPayment,
+  getPaymentAccounts
 } from '../controllers/orderController.js';
 import { protect } from '../middleware/auth.js';
 import validate from '../middleware/validate.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -18,11 +22,12 @@ const createOrderValidation = [
   body('shippingAddress.address').notEmpty().withMessage('Address is required'),
   body('shippingAddress.city').notEmpty().withMessage('City is required'),
   body('shippingAddress.province').notEmpty().withMessage('Province is required'),
-  body('paymentMethod').isIn(['jazzcash', 'easypaisa', 'cod', 'bank_transfer']).withMessage('Invalid payment method')
+  body('paymentMethod').isIn(['easypaisa', 'jazzcash', 'bank_transfer']).withMessage('Invalid payment method')
 ];
 
-// Public route
+// Public routes
 router.get('/track/:orderNumber', trackOrder);
+router.get('/payment-accounts', getPaymentAccounts);
 
 // Protected routes
 router.use(protect);
@@ -31,5 +36,7 @@ router.post('/', createOrderValidation, validate, createOrder);
 router.get('/my-orders', getMyOrders);
 router.get('/:id', getOrder);
 router.put('/:id/cancel', cancelOrder);
+router.post('/:id/advance-payment', upload.single('screenshot'), submitAdvancePayment);
+router.post('/:id/final-payment', upload.single('screenshot'), submitFinalPayment);
 
 export default router;

@@ -94,7 +94,22 @@ export const ordersAPI = {
   getMyOrders: () => api.get('/orders/my-orders'),
   getById: (id) => api.get(`/orders/${id}`),
   track: (orderNumber) => api.get(`/orders/track/${orderNumber}`),
-  cancel: (id) => api.put(`/orders/${id}/cancel`)
+  cancel: (id) => api.put(`/orders/${id}/cancel`),
+  getPaymentAccounts: () => api.get('/orders/payment-accounts'),
+  submitAdvancePayment: (id, screenshot) => {
+    const formData = new FormData();
+    formData.append('screenshot', screenshot);
+    return api.post(`/orders/${id}/advance-payment`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  submitFinalPayment: (id, screenshot) => {
+    const formData = new FormData();
+    formData.append('screenshot', screenshot);
+    return api.post(`/orders/${id}/final-payment`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
 };
 
 // Custom Design API
@@ -235,6 +250,11 @@ export const managementAPI = {
   getOrders: (params) => api.get('/admin/orders', { params }),
   getOrderById: (id) => api.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
+  approveAdvancePayment: (id) => api.put(`/admin/orders/${id}/approve-advance`),
+  rejectAdvancePayment: (id, reason) => api.put(`/admin/orders/${id}/reject-advance`, { reason }),
+  approveFinalPayment: (id) => api.put(`/admin/orders/${id}/approve-final`),
+  rejectFinalPayment: (id, reason) => api.put(`/admin/orders/${id}/reject-final`, { reason }),
+  requestFinalPayment: (id) => api.put(`/admin/orders/${id}/request-final-payment`),
 
   // Custom Designs
   getCustomDesigns: (params) => api.get('/admin/custom-designs', { params }),

@@ -63,18 +63,54 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['jazzcash', 'easypaisa', 'cod', 'bank_transfer'],
+    enum: ['easypaisa', 'jazzcash', 'bank_transfer'],
     required: true
   },
+  // Advance payment (50%) - paid when ordering
+  advancePayment: {
+    amount: { type: Number, default: 0 },
+    status: {
+      type: String,
+      enum: ['pending', 'submitted', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    screenshot: {
+      url: String,
+      publicId: String
+    },
+    submittedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rejectionReason: String
+  },
+  // Final payment (50%) - paid when order is ready
+  finalPayment: {
+    amount: { type: Number, default: 0 },
+    status: {
+      type: String,
+      enum: ['pending', 'submitted', 'approved', 'rejected', 'not_required'],
+      default: 'pending'
+    },
+    screenshot: {
+      url: String,
+      publicId: String
+    },
+    submittedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rejectionReason: String
+  },
+  // Overall payment status
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
-    default: 'pending'
-  },
-  paymentDetails: {
-    transactionId: String,
-    paidAt: Date,
-    paymentResponse: mongoose.Schema.Types.Mixed
+    enum: ['pending_advance', 'advance_submitted', 'advance_approved', 'pending_final', 'final_submitted', 'fully_paid', 'rejected'],
+    default: 'pending_advance'
   },
   shippingAddress: {
     fullName: {

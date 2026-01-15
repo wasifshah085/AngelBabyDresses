@@ -11,6 +11,7 @@ import { useLanguageStore } from '../../store/useStore';
 import { PageLoader } from '../../components/common/Loader';
 import Loader from '../../components/common/Loader';
 import ImageLightbox from '../../components/common/ImageLightbox';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Categories = () => {
   const { t } = useTranslation();
@@ -167,17 +168,17 @@ const Categories = () => {
                 {category.image?.url ? (
                   <>
                     <img
-                      src={category.image.url}
+                      src={getImageUrl(category.image.url)}
                       alt={category.name?.[language] || category.name?.en}
                       className="w-full h-full object-cover cursor-pointer"
                       onClick={() => {
-                        setLightboxImage(category.image.url);
+                        setLightboxImage(getImageUrl(category.image.url));
                         setLightboxOpen(true);
                       }}
                     />
                     <button
                       onClick={() => {
-                        setLightboxImage(category.image.url);
+                        setLightboxImage(getImageUrl(category.image.url));
                         setLightboxOpen(true);
                       }}
                       className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"

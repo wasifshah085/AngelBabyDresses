@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
 import { PageLoader } from '../../components/common/Loader';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Reviews = () => {
   const { t } = useTranslation();
@@ -111,7 +112,7 @@ const Reviews = () => {
                 {/* Product */}
                 <div className="flex gap-3 shrink-0">
                   <img
-                    src={review.product?.images?.[0]?.url}
+                    src={getImageUrl(review.product?.images?.[0]?.url)}
                     alt={review.product?.name?.[language] || review.product?.name?.en}
                     className="w-16 h-16 object-cover rounded-lg"
                   />
@@ -151,10 +152,10 @@ const Reviews = () => {
                       {review.images.map((img, index) => (
                         <img
                           key={index}
-                          src={img.url}
+                          src={getImageUrl(img.url)}
                           alt=""
                           className="w-12 h-12 object-cover rounded cursor-pointer"
-                          onClick={() => window.open(img.url, '_blank')}
+                          onClick={() => window.open(getImageUrl(img.url), '_blank')}
                         />
                       ))}
                     </div>

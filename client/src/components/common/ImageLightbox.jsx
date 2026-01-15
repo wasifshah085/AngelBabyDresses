@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiChevronLeft, FiChevronRight, FiZoomIn, FiZoomOut } from 'react-icons/fi';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ImageLightbox = ({ images, initialIndex = 0, isOpen, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -120,7 +121,7 @@ const ImageLightbox = ({ images, initialIndex = 0, isOpen, onClose }) => {
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <img
-          src={currentImage?.url || currentImage}
+          src={getImageUrl(currentImage?.url || currentImage)}
           alt={`Image ${currentIndex + 1}`}
           className="max-w-full max-h-full object-contain transition-transform duration-200"
           style={{ transform: `scale(${zoom})` }}
@@ -145,7 +146,7 @@ const ImageLightbox = ({ images, initialIndex = 0, isOpen, onClose }) => {
               }`}
             >
               <img
-                src={img?.url || img}
+                src={getImageUrl(img?.url || img)}
                 alt={`Thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
               />

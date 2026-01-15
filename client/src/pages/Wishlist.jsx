@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { authAPI, cartAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore, useUIStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
+import { getImageUrl } from '../utils/imageUrl';
 
 const Wishlist = () => {
   const { t } = useTranslation();
@@ -61,7 +62,7 @@ const Wishlist = () => {
         id: `${product._id}-${defaultSize}-${defaultColor?.name || 'default'}`,
         productId: product._id,
         name: product.name?.[language] || product.name?.en,
-        image: product.images?.[0]?.url,
+        image: getImageUrl(product.images?.[0]?.url),
         price: product.salePrice || product.price,
         size: defaultSize,
         color: defaultColor,
@@ -109,7 +110,7 @@ const Wishlist = () => {
                   <div className="relative aspect-square">
                     <Link to={`/product/${product.slug}`}>
                       <img
-                        src={product.images?.[0]?.url}
+                        src={getImageUrl(product.images?.[0]?.url)}
                         alt={productName}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />

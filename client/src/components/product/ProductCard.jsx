@@ -5,6 +5,7 @@ import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import { useLanguageStore, useAuthStore } from '../../store/useStore';
 import toast from 'react-hot-toast';
 import { authAPI } from '../../services/api';
+import { getProductImageUrl } from '../../utils/imageUrl';
 
 const ProductCard = ({ product }) => {
   const { t } = useTranslation();
@@ -81,17 +82,20 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link to={`/product/${product.slug}`} className="product-card group">
-      {/* Image Container */}
-      <div className="relative overflow-hidden bg-gray-100">
+      {/* Image Container - fixed aspect ratio prevents layout shift */}
+      <div className="relative overflow-hidden bg-gray-100 aspect-square">
         <img
-          src={product.images?.[0]?.url || 'https://placehold.co/400x400/FFC0CB/333?text=No+Image'}
+          src={getProductImageUrl(product.images)}
           alt={name}
           className="product-image"
           loading="lazy"
+          // Prevent layout shift by setting explicit dimensions
+          width="400"
+          height="400"
         />
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
+        <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
           {hasDiscount && (
             <span className="sale-badge">
               {discountPercent === 'SALE' ? 'SALE' : `-${discountPercent}%`}
@@ -104,21 +108,21 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        {/* Actions */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions - visible on mobile, hover on desktop */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 z-10 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity">
           <button
             onClick={handleWishlistToggle}
             disabled={wishlistMutation.isPending}
-            className={`w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-md transition-colors ${
-              isInWishlist ? 'text-red-500' : 'text-gray-600 hover:text-red-500'
+            className={`w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-md ${
+              isInWishlist ? 'text-red-500' : 'text-gray-600'
             }`}
           >
             <FiHeart className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
           </button>
         </div>
 
-        {/* Quick Add */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform">
+        {/* Quick Add - hidden on mobile (tap goes to product page), visible on hover for desktop */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full md:group-hover:translate-y-0 hidden md:block md:transition-transform">
           <button className="w-full btn btn-primary btn-sm flex items-center justify-center gap-2">
             <FiShoppingBag className="w-4 h-4" />
             <span>{t('common.addToCart')}</span>

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag } from 'react-icons/fi';
 import { useUIStore, useCartStore, useAuthStore, useLanguageStore } from '../../store/useStore';
 import { cartAPI } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const CartDrawer = () => {
   const { t } = useTranslation();
@@ -95,7 +96,7 @@ const CartDrawer = () => {
               {items.map((item) => (
                 <div key={item.id} className="flex gap-4 p-3 bg-gray-50 rounded-lg">
                   <img
-                    src={item.image || 'https://placehold.co/80x80/FFC0CB/333?text=No+Image'}
+                    src={getImageUrl(item.image) || 'https://placehold.co/80x80/FFC0CB/333?text=No+Image'}
                     alt={item.name}
                     className="w-20 h-20 object-cover rounded-lg"
                   />

@@ -55,15 +55,15 @@ const Footer = () => {
                 {t('home.newsletterDesc')}
               </p>
             </div>
-            <form className="flex w-full max-w-md">
+            <form className="flex flex-col sm:flex-row w-full max-w-md gap-2 sm:gap-0">
               <input
                 type="email"
                 placeholder={t('home.emailPlaceholder')}
-                className="flex-1 px-4 py-3 rounded-l-lg focus:outline-none"
+                className="flex-1 min-w-0 px-4 py-3 rounded-lg sm:rounded-l-lg sm:rounded-r-none focus:outline-none"
               />
               <button
                 type="submit"
-                className="px-6 py-3 bg-gray-900 text-white font-medium rounded-r-lg hover:bg-gray-800 transition-colors"
+                className="px-6 py-3 bg-gray-900 text-white font-medium rounded-lg sm:rounded-l-none sm:rounded-r-lg hover:bg-gray-800 transition-colors whitespace-nowrap flex-shrink-0"
               >
                 {t('home.subscribe')}
               </button>

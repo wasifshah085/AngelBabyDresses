@@ -10,6 +10,7 @@ import { customDesignAPI } from '../services/api';
 import { useAuthStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
 import Loader from '../components/common/Loader';
+import { getImageUrl } from '../utils/imageUrl';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -148,10 +149,10 @@ const DesignDetail = () => {
                 {design.images?.map((image, index) => (
                   <img
                     key={index}
-                    src={image.url}
+                    src={getImageUrl(image.url)}
                     alt={`Design ${index + 1}`}
                     className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => window.open(image.url, '_blank')}
+                    onClick={() => window.open(getImageUrl(image.url), '_blank')}
                   />
                 ))}
               </div>

@@ -1,3 +1,4 @@
+import { useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,85 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
+// Static hero slide data - structure is language-independent
+const HERO_SLIDES_DATA = [
+  {
+    id: 'hero-1',
+    titleKey: 'hero.title',
+    subtitleKey: 'hero.subtitle',
+    image: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=1920',
+    ctaKey: 'hero.shopNow',
+    link: '/shop'
+  },
+  {
+    id: 'hero-2',
+    titleKey: 'hero.newCollection',
+    subtitleKey: 'hero.newCollectionSubtitle',
+    image: 'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=1920',
+    ctaKey: 'common.viewAll',
+    link: '/shop?filter=new'
+  },
+  {
+    id: 'hero-3',
+    titleKey: 'hero.customDesigns',
+    subtitleKey: 'hero.customDesignsSubtitle',
+    image: 'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?w=1920',
+    ctaKey: 'hero.customDesign',
+    link: '/custom-design'
+  }
+];
+
+// Feature icons - language independent
+const FEATURE_ICONS = [FiTruck, FiShield, FiRefreshCw, FiHeart];
+const FEATURE_KEYS = [
+  { titleKey: 'home.fastDelivery', descKey: 'home.fastDeliveryDesc' },
+  { titleKey: 'home.qualityFabric', descKey: 'home.qualityFabricDesc' },
+  { titleKey: 'home.customOrders', descKey: 'home.customOrdersDesc' },
+  { titleKey: 'home.uniqueDesigns', descKey: 'home.uniqueDesignsDesc' }
+];
+
+// Memoized Hero Swiper to prevent re-initialization on language change
+const HeroSwiper = memo(function HeroSwiper() {
+  const { t } = useTranslation();
+
+  return (
+    <Swiper
+      modules={[Autoplay, Pagination, Navigation]}
+      autoplay={{ delay: 5000, disableOnInteraction: false }}
+      pagination={{ clickable: true }}
+      navigation
+      loop
+      className="h-[60vh] lg:h-[80vh]"
+      key="hero-swiper-static"
+    >
+      {HERO_SLIDES_DATA.map((slide) => (
+        <SwiperSlide key={slide.id}>
+          <div
+            className="relative h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${slide.image})` }}
+          >
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="container relative h-full flex items-center">
+              <div className="max-w-xl text-white">
+                <h1 className="text-4xl lg:text-6xl font-heading font-bold mb-4 animate-fade-in">
+                  {t(slide.titleKey)}
+                </h1>
+                <p className="text-lg lg:text-xl mb-8 text-white/90 animate-fade-in">
+                  {t(slide.subtitleKey)}
+                </p>
+                <Link to={slide.link} className="btn btn-primary btn-lg animate-fade-in">
+                  {t(slide.ctaKey)}
+                  <FiArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </SwiperSlide>
+      ))}
+    </Swiper>
+  );
+});
+
 const Home = () => {
   const { t } = useTranslation();
 
@@ -26,33 +106,12 @@ const Home = () => {
     queryFn: () => productsAPI.getNewArrivals(8)
   });
 
-  const heroSlides = [
-    {
-      title: t('hero.title'),
-      subtitle: t('hero.subtitle'),
-      image: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=1920',
-      cta: { text: t('hero.shopNow'), link: '/shop' }
-    },
-    {
-      title: 'New Collection',
-      subtitle: 'Discover our latest arrivals for the new season',
-      image: 'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=1920',
-      cta: { text: t('common.viewAll'), link: '/shop?filter=new' }
-    },
-    {
-      title: 'Custom Designs',
-      subtitle: 'Create unique outfits for your little angels',
-      image: 'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?w=1920',
-      cta: { text: t('hero.customDesign'), link: '/custom-design' }
-    }
-  ];
-
-  const features = [
-    { icon: FiTruck, title: t('home.fastDelivery'), desc: t('home.fastDeliveryDesc') },
-    { icon: FiShield, title: t('home.qualityFabric'), desc: t('home.qualityFabricDesc') },
-    { icon: FiRefreshCw, title: t('home.customOrders'), desc: t('home.customOrdersDesc') },
-    { icon: FiHeart, title: t('home.uniqueDesigns'), desc: t('home.uniqueDesignsDesc') }
-  ];
+  // Features with icons - memoized to prevent re-creation
+  const features = useMemo(() => FEATURE_ICONS.map((icon, index) => ({
+    icon,
+    titleKey: FEATURE_KEYS[index].titleKey,
+    descKey: FEATURE_KEYS[index].descKey
+  })), []);
 
   return (
     <>
@@ -61,41 +120,9 @@ const Home = () => {
         <meta name="description" content="Shop the finest collection of kids clothing in Pakistan. Quality dresses, outfits, and custom designs for your little angels." />
       </Helmet>
 
-      {/* Hero Section */}
+      {/* Hero Section - Memoized to prevent re-render on language change */}
       <section className="relative">
-        <Swiper
-          modules={[Autoplay, Pagination, Navigation]}
-          autoplay={{ delay: 5000 }}
-          pagination={{ clickable: true }}
-          navigation
-          loop
-          className="h-[60vh] lg:h-[80vh]"
-        >
-          {heroSlides.map((slide, index) => (
-            <SwiperSlide key={index}>
-              <div
-                className="relative h-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${slide.image})` }}
-              >
-                <div className="absolute inset-0 bg-black/40" />
-                <div className="container relative h-full flex items-center">
-                  <div className="max-w-xl text-white">
-                    <h1 className="text-4xl lg:text-6xl font-heading font-bold mb-4 animate-fade-in">
-                      {slide.title}
-                    </h1>
-                    <p className="text-lg lg:text-xl mb-8 text-white/90 animate-fade-in">
-                      {slide.subtitle}
-                    </p>
-                    <Link to={slide.cta.link} className="btn btn-primary btn-lg animate-fade-in">
-                      {slide.cta.text}
-                      <FiArrowRight className="w-5 h-5 ml-2" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        <HeroSwiper />
       </section>
 
       {/* Features Section */}
@@ -108,9 +135,9 @@ const Home = () => {
                   <feature.icon className="w-8 h-8 text-primary-600" />
                 </div>
                 <h3 className="font-heading font-semibold text-gray-900 mb-2">
-                  {feature.title}
+                  {t(feature.titleKey)}
                 </h3>
-                <p className="text-sm text-gray-600">{feature.desc}</p>
+                <p className="text-sm text-gray-600">{t(feature.descKey)}</p>
               </div>
             ))}
           </div>

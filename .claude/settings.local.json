@@ -9,7 +9,8 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(xargs:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(tree:*)"
     ]
   }
 }

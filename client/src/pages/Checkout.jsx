@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiMapPin, FiCreditCard, FiTruck, FiCheck } from 'react-icons/fi';
+import { FiMapPin, FiCreditCard, FiCheck, FiInfo } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { cartAPI, ordersAPI, authAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
 import Loader from '../components/common/Loader';
+import { getImageUrl } from '../utils/imageUrl';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ const Checkout = () => {
 
   const [step, setStep] = useState(1);
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('easypaisa');
   const [loading, setLoading] = useState(false);
 
   const {
@@ -48,36 +49,7 @@ const Checkout = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries(['cart']);
       clearCart();
-
-      const { data: orderData, payment } = response.data;
-
-      // Handle payment redirect for online payment methods
-      if (payment) {
-        if (payment.method === 'jazzcash' && payment.formData) {
-          // Create and submit form for JazzCash
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = import.meta.env.VITE_JAZZCASH_URL || 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/';
-
-          Object.entries(payment.formData).forEach(([key, value]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value;
-            form.appendChild(input);
-          });
-
-          document.body.appendChild(form);
-          form.submit();
-          return;
-        } else if (payment.method === 'easypaisa' && payment.paymentUrl) {
-          // Redirect to Easypaisa
-          window.location.href = payment.paymentUrl;
-          return;
-        }
-      }
-
-      // For COD/Bank Transfer, go to success page
+      const { data: orderData } = response.data;
       navigate(`/order-success/${orderData.orderNumber}`);
     },
     onError: (error) => {
@@ -89,15 +61,39 @@ const Checkout = () => {
   const cart = cartData?.data?.data;
   const addresses = userData?.data?.data?.addresses || [];
 
+  // Payment methods - manual payments only
   const paymentMethods = [
-    { id: 'cod', name: t('checkout.cashOnDelivery'), icon: FiTruck, description: t('checkout.codDescription') },
-    { id: 'jazzcash', name: 'JazzCash', icon: FiCreditCard, description: t('checkout.jazzcashDescription') },
-    { id: 'easypaisa', name: 'Easypaisa', icon: FiCreditCard, description: t('checkout.easypaisaDescription') },
-    { id: 'bank_transfer', name: t('checkout.bankTransfer'), icon: FiCreditCard, description: t('checkout.bankDescription') }
+    {
+      id: 'easypaisa',
+      name: 'EasyPaisa',
+      icon: FiCreditCard,
+      description: t('checkout.easypaisaDescription'),
+      account: '03451504434',
+      accountHolder: 'Quratulain Syed'
+    },
+    {
+      id: 'jazzcash',
+      name: 'JazzCash',
+      icon: FiCreditCard,
+      description: t('checkout.jazzcashDescription'),
+      account: '03451504434',
+      accountHolder: 'Quratulain Syed'
+    },
+    {
+      id: 'bank_transfer',
+      name: t('checkout.bankTransfer'),
+      icon: FiCreditCard,
+      description: t('checkout.bankDescription'),
+      bankName: 'HBL (Habib Bank Limited)',
+      account: '16817905812303',
+      accountHolder: 'Quratulain Syed'
+    }
   ];
 
   const shippingCost = cart?.subtotal >= 3000 ? 0 : 200;
   const total = (cart?.total || 0) + shippingCost;
+  const advanceAmount = Math.ceil(total / 2);
+  const finalAmount = total - advanceAmount;
 
   const onAddressSubmit = (data) => {
     setSelectedAddress(data);
@@ -140,7 +136,7 @@ const Checkout = () => {
         </h1>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-12">
+        <div className="flex items-center justify-center mb-12 overflow-x-auto">
           {[
             { num: 1, label: t('checkout.shipping') },
             { num: 2, label: t('checkout.payment') },
@@ -156,11 +152,11 @@ const Checkout = () => {
               >
                 {step > s.num ? <FiCheck /> : s.num}
               </div>
-              <span className={`ml-2 ${step >= s.num ? 'text-gray-900' : 'text-gray-500'}`}>
+              <span className={`ml-2 whitespace-nowrap ${step >= s.num ? 'text-gray-900' : 'text-gray-500'}`}>
                 {s.label}
               </span>
               {index < 2 && (
-                <div className={`w-16 h-1 mx-4 ${step > s.num ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                <div className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 ${step > s.num ? 'bg-primary-500' : 'bg-gray-200'}`} />
               )}
             </div>
           ))}
@@ -327,30 +323,54 @@ const Checkout = () => {
                   {t('checkout.paymentMethod')}
                 </h2>
 
+                {/* Payment Notice */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <FiInfo className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">{t('checkout.madeToOrderNotice') || 'Made-to-Order Payment'}</p>
+                      <p>{t('checkout.advancePaymentInfo') || 'We require 50% advance payment when placing order. The remaining 50% is due when your order is ready for delivery.'}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-3">
                   {paymentMethods.map((method) => (
                     <label
                       key={method.id}
-                      className={`flex items-start gap-4 border rounded-lg p-4 cursor-pointer transition-colors ${
+                      className={`block border rounded-lg p-4 cursor-pointer transition-colors ${
                         paymentMethod === method.id
                           ? 'border-primary-500 bg-primary-50'
                           : 'border-gray-200 hover:border-primary-300'
                       }`}
                     >
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value={method.id}
-                        checked={paymentMethod === method.id}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <method.icon className="w-5 h-5 text-gray-600" />
-                          <span className="font-medium">{method.name}</span>
+                      <div className="flex items-start gap-4">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={method.id}
+                          checked={paymentMethod === method.id}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <method.icon className="w-5 h-5 text-gray-600" />
+                            <span className="font-medium">{method.name}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">{method.description}</p>
+
+                          {/* Account Details */}
+                          {paymentMethod === method.id && (
+                            <div className="mt-3 p-3 bg-white rounded border text-sm">
+                              {method.bankName && (
+                                <p><span className="text-gray-500">Bank:</span> {method.bankName}</p>
+                              )}
+                              <p><span className="text-gray-500">{t('checkout.accountNumber') || 'Account'}:</span> <span className="font-mono font-medium">{method.account}</span></p>
+                              <p><span className="text-gray-500">{t('checkout.accountHolder') || 'Name'}:</span> {method.accountHolder}</p>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">{method.description}</p>
                       </div>
                     </label>
                   ))}
@@ -411,21 +431,34 @@ const Checkout = () => {
                     {cart?.items?.map((item) => (
                       <div key={item._id} className="flex gap-4">
                         <img
-                          src={item.product?.images?.[0]?.url}
+                          src={getImageUrl(item.product?.images?.[0]?.url)}
                           alt={item.product?.name?.[language] || item.product?.name?.en}
                           className="w-16 h-16 object-cover rounded"
                         />
-                        <div className="flex-1">
-                          <p className="font-medium">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">
                             {item.product?.name?.[language] || item.product?.name?.en}
                           </p>
                           <p className="text-sm text-gray-500">
                             {item.ageRange} {item.color && `/ ${item.color.name}`} x {item.quantity}
                           </p>
                         </div>
-                        <p className="font-medium">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-medium whitespace-nowrap">Rs. {(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Payment Info Box */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+                  <h3 className="font-heading font-semibold text-yellow-800 mb-3">
+                    {t('checkout.paymentInstructions') || 'Payment Instructions'}
+                  </h3>
+                  <div className="text-sm text-yellow-800 space-y-2">
+                    <p>{t('checkout.paymentStep1') || '1. After placing order, send 50% advance payment to the account shown'}</p>
+                    <p>{t('checkout.paymentStep2') || '2. Upload screenshot of payment on the order page'}</p>
+                    <p>{t('checkout.paymentStep3') || '3. Once verified, we will start making your order'}</p>
+                    <p>{t('checkout.paymentStep4') || '4. When ready, pay remaining 50% and receive your order'}</p>
                   </div>
                 </div>
 
@@ -480,6 +513,19 @@ const Checkout = () => {
                 <div className="flex justify-between text-lg font-semibold">
                   <span>{t('cart.total')}</span>
                   <span className="text-primary-600">Rs. {total.toLocaleString()}</span>
+                </div>
+
+                {/* Payment Breakdown */}
+                <div className="mt-4 pt-4 border-t border-dashed">
+                  <p className="text-xs text-gray-500 uppercase mb-2">{t('checkout.paymentBreakdown') || 'Payment Breakdown'}</p>
+                  <div className="flex justify-between text-green-700 bg-green-50 p-2 rounded mb-2">
+                    <span>{t('checkout.advancePayment') || 'Advance (50%)'}</span>
+                    <span className="font-semibold">Rs. {advanceAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>{t('checkout.finalPayment') || 'On Completion (50%)'}</span>
+                    <span className="font-medium">Rs. {finalAmount.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
 

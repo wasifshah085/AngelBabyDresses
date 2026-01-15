@@ -44,9 +44,13 @@ const saveFileLocally = async (file, folder) => {
   // Write file
   fs.writeFileSync(filePath, file.buffer);
 
-  // Return URL path (relative path works with proxy)
+  // Build absolute URL for production, relative for development
+  const baseUrl = process.env.NODE_ENV === 'production' && process.env.API_URL
+    ? process.env.API_URL
+    : '';
+
   return {
-    url: `/uploads/${folder}/${uniqueName}`,
+    url: `${baseUrl}/uploads/${folder}/${uniqueName}`,
     publicId: `local_${folder}_${uniqueName}`
   };
 };
@@ -812,6 +816,280 @@ export const updateOrderStatus = async (req, res) => {
     res.json({
       success: true,
       message: 'Order status updated',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Approve advance payment
+// @route   PUT /api/admin/orders/:id/approve-advance
+// @access  Admin
+export const approveAdvancePayment = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.advancePayment.status !== 'submitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending advance payment to approve'
+      });
+    }
+
+    order.advancePayment.status = 'approved';
+    order.advancePayment.reviewedAt = new Date();
+    order.advancePayment.reviewedBy = req.user._id;
+    order.paymentStatus = 'advance_approved';
+    order.status = 'confirmed';
+
+    order.statusHistory.push({
+      status: 'confirmed',
+      note: 'Advance payment approved - Order confirmed',
+      updatedBy: req.user._id
+    });
+
+    await order.save();
+
+    // Send notification to customer
+    const lang = order.user?.preferredLanguage || 'en';
+    if (order.shippingAddress?.email || order.user?.email) {
+      sendEmail({
+        to: order.shippingAddress.email || order.user.email,
+        subject: 'Payment Approved - Order Confirmed',
+        html: `<p>Your advance payment has been approved. Your order #${order.orderNumber} is now confirmed and will be processed.</p>`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Advance payment approved',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Reject advance payment
+// @route   PUT /api/admin/orders/:id/reject-advance
+// @access  Admin
+export const rejectAdvancePayment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.advancePayment.status !== 'submitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending advance payment to reject'
+      });
+    }
+
+    order.advancePayment.status = 'rejected';
+    order.advancePayment.reviewedAt = new Date();
+    order.advancePayment.reviewedBy = req.user._id;
+    order.advancePayment.rejectionReason = reason || 'Payment could not be verified';
+    order.paymentStatus = 'pending_advance';
+
+    await order.save();
+
+    // Send notification to customer
+    if (order.shippingAddress?.email || order.user?.email) {
+      sendEmail({
+        to: order.shippingAddress.email || order.user.email,
+        subject: 'Payment Rejected - Please Resubmit',
+        html: `<p>Your advance payment for order #${order.orderNumber} was rejected.</p><p>Reason: ${reason || 'Payment could not be verified'}</p><p>Please submit a new payment screenshot.</p>`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Advance payment rejected',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Approve final payment
+// @route   PUT /api/admin/orders/:id/approve-final
+// @access  Admin
+export const approveFinalPayment = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.finalPayment.status !== 'submitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending final payment to approve'
+      });
+    }
+
+    order.finalPayment.status = 'approved';
+    order.finalPayment.reviewedAt = new Date();
+    order.finalPayment.reviewedBy = req.user._id;
+    order.paymentStatus = 'fully_paid';
+
+    await order.save();
+
+    // Send notification to customer
+    if (order.shippingAddress?.email || order.user?.email) {
+      sendEmail({
+        to: order.shippingAddress.email || order.user.email,
+        subject: 'Final Payment Approved - Order Complete',
+        html: `<p>Your final payment has been approved. Your order #${order.orderNumber} is now fully paid and will be shipped soon.</p>`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Final payment approved',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Reject final payment
+// @route   PUT /api/admin/orders/:id/reject-final
+// @access  Admin
+export const rejectFinalPayment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.finalPayment.status !== 'submitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending final payment to reject'
+      });
+    }
+
+    order.finalPayment.status = 'rejected';
+    order.finalPayment.reviewedAt = new Date();
+    order.finalPayment.reviewedBy = req.user._id;
+    order.finalPayment.rejectionReason = reason || 'Payment could not be verified';
+    order.paymentStatus = 'pending_final';
+
+    await order.save();
+
+    // Send notification to customer
+    if (order.shippingAddress?.email || order.user?.email) {
+      sendEmail({
+        to: order.shippingAddress.email || order.user.email,
+        subject: 'Final Payment Rejected - Please Resubmit',
+        html: `<p>Your final payment for order #${order.orderNumber} was rejected.</p><p>Reason: ${reason || 'Payment could not be verified'}</p><p>Please submit a new payment screenshot.</p>`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Final payment rejected',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Request final payment from customer
+// @route   PUT /api/admin/orders/:id/request-final-payment
+// @access  Admin
+export const requestFinalPayment = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.advancePayment.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Advance payment must be approved first'
+      });
+    }
+
+    order.paymentStatus = 'pending_final';
+    order.status = 'processing';
+
+    order.statusHistory.push({
+      status: 'processing',
+      note: 'Order ready - Final payment requested',
+      updatedBy: req.user._id
+    });
+
+    await order.save();
+
+    // Send notification to customer
+    if (order.shippingAddress?.email || order.user?.email) {
+      sendEmail({
+        to: order.shippingAddress.email || order.user.email,
+        subject: 'Your Order is Ready - Final Payment Required',
+        html: `<p>Great news! Your order #${order.orderNumber} is ready.</p>
+               <p>Please submit the remaining payment of Rs. ${order.finalPayment.amount.toLocaleString()} to receive your order.</p>
+               <p><strong>Payment Accounts:</strong></p>
+               <ul>
+                 <li>EasyPaisa/JazzCash: 03451504434</li>
+                 <li>HBL Bank: 16817905812303 (Quratulain Syed)</li>
+               </ul>`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Final payment request sent to customer',
       data: order
     });
   } catch (error) {

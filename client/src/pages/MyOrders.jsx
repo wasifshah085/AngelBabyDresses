@@ -6,6 +6,7 @@ import { FiPackage, FiEye, FiChevronRight } from 'react-icons/fi';
 import { ordersAPI } from '../services/api';
 import { useLanguageStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
+import { getImageUrl } from '../utils/imageUrl';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -105,7 +106,7 @@ const MyOrders = () => {
                   {order.items?.slice(0, 4).map((item, index) => (
                     <img
                       key={index}
-                      src={item.product?.images?.[0]?.url || item.image}
+                      src={getImageUrl(item.product?.images?.[0]?.url || item.image)}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg shrink-0"
                     />

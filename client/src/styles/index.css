@@ -105,14 +105,28 @@
   /* Product card */
   .product-card {
     @apply card cursor-pointer;
+    /* Prevent layout shift */
+    contain: layout style;
   }
 
-  .product-card:hover .product-image {
-    @apply scale-105;
+  /* Only apply hover effects on devices that support hover (desktop) */
+  @media (hover: hover) and (pointer: fine) {
+    .product-card:hover .product-image {
+      @apply scale-105;
+    }
   }
 
   .product-image {
-    @apply w-full aspect-square object-cover transition-transform duration-300;
+    @apply w-full aspect-square object-cover;
+    /* Only enable transition on desktop */
+    transition: none;
+  }
+
+  /* Enable smooth transitions only on desktop */
+  @media (hover: hover) and (pointer: fine) {
+    .product-image {
+      @apply transition-transform duration-300;
+    }
   }
 
   /* Sale badge */
@@ -214,4 +228,379 @@
 .page-exit-active {
   opacity: 0;
   transition: opacity 300ms;
+}
+
+/* ==================== Mobile Layout Stability ==================== */
+
+/* Prevent Cumulative Layout Shift (CLS) on mobile */
+@media (max-width: 767px) {
+  /* Disable all hover-based transforms and animations on mobile */
+  .product-card,
+  .product-card * {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* But allow color transitions for better tap feedback */
+  .product-card button,
+  .product-card a {
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+  }
+
+  /* Fixed card layout */
+  .product-card {
+    contain: layout style;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  /* Fixed image container - use direct child selector to avoid Tailwind conflict */
+  .product-card > div:first-child {
+    overflow: hidden;
+  }
+
+  /* Ensure image doesn't cause layout shift */
+  .product-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
+  /* Product info section - stable height */
+  .product-card > div:last-child {
+    padding: 1rem;
+    height: auto;
+  }
+
+  /* Disable quick add button on mobile - tap goes to product page */
+  .product-card [class*="absolute"][class*="bottom-0"] {
+    display: none !important;
+  }
+
+  /* Keep wishlist button always visible on mobile */
+  .product-card [class*="absolute"][class*="top-3"][class*="right-3"] {
+    opacity: 1 !important;
+  }
+}
+
+/* ==================== RTL (Urdu) Support ==================== */
+
+/* Base RTL text handling */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+/* RTL Container and layout fixes */
+[dir="rtl"] .container {
+  direction: rtl;
+}
+
+/* RTL Flex adjustments */
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex.items-center.gap-2,
+[dir="rtl"] .flex.items-center.gap-3,
+[dir="rtl"] .flex.items-center.gap-4 {
+  flex-direction: row-reverse;
+}
+
+/* Keep certain flex containers LTR (like navigation icons) */
+[dir="rtl"] .flex.items-center.justify-between {
+  flex-direction: row;
+}
+
+/* RTL Margin/Padding utilities - swap left/right */
+[dir="rtl"] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
+[dir="rtl"] .ml-3 { margin-left: 0; margin-right: 0.75rem; }
+[dir="rtl"] .ml-4 { margin-left: 0; margin-right: 1rem; }
+[dir="rtl"] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+[dir="rtl"] .mr-3 { margin-right: 0; margin-left: 0.75rem; }
+[dir="rtl"] .mr-4 { margin-right: 0; margin-left: 1rem; }
+[dir="rtl"] .pl-4 { padding-left: 0; padding-right: 1rem; }
+[dir="rtl"] .pr-4 { padding-right: 0; padding-left: 1rem; }
+
+/* RTL Position utilities */
+[dir="rtl"] .left-0 { left: auto; right: 0; }
+[dir="rtl"] .right-0 { right: auto; left: 0; }
+[dir="rtl"] .left-3 { left: auto; right: 0.75rem; }
+[dir="rtl"] .right-3 { right: auto; left: 0.75rem; }
+[dir="rtl"] .-left-1 { left: auto; right: -0.25rem; }
+[dir="rtl"] .-right-1 { right: auto; left: -0.25rem; }
+
+/* RTL border radius */
+[dir="rtl"] .rounded-l-lg { border-radius: 0 0.5rem 0.5rem 0; }
+[dir="rtl"] .rounded-r-lg { border-radius: 0.5rem 0 0 0.5rem; }
+
+/* RTL Icon positioning */
+[dir="rtl"] .btn svg:last-child {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* RTL Sale badge position */
+[dir="rtl"] .sale-badge {
+  left: auto;
+  right: 0.75rem;
+}
+
+/* Header RTL fixes */
+[dir="rtl"] header nav {
+  direction: rtl;
+}
+
+/* Mobile Menu RTL - slide from right */
+[dir="rtl"] .fixed.inset-y-0.left-0 {
+  left: auto;
+  right: 0;
+}
+
+/* RTL Grid fixes for product cards */
+[dir="rtl"] .grid {
+  direction: rtl;
+}
+
+/* RTL Form inputs */
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+[dir="rtl"] input::placeholder,
+[dir="rtl"] textarea::placeholder {
+  text-align: right;
+}
+
+/* RTL Swiper fixes */
+[dir="rtl"] .swiper {
+  direction: ltr; /* Keep swiper LTR for proper sliding */
+}
+
+[dir="rtl"] .swiper-slide {
+  direction: rtl; /* But content inside should be RTL */
+}
+
+/* RTL Navigation arrows */
+[dir="rtl"] .swiper-button-next {
+  right: auto;
+  left: 10px;
+}
+
+[dir="rtl"] .swiper-button-prev {
+  left: auto;
+  right: 10px;
+}
+
+/* Cart drawer RTL - slide from left instead */
+[dir="rtl"] .fixed.inset-y-0.right-0 {
+  right: auto;
+  left: 0;
+}
+
+/* RTL Footer fixes */
+[dir="rtl"] footer .text-center.lg\\:text-left {
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  [dir="rtl"] footer .text-center.lg\\:text-left {
+    text-align: right;
+  }
+}
+
+/* ==================== Mobile RTL Specific Fixes ==================== */
+
+@media (max-width: 767px) {
+  /* Mobile RTL base styles */
+  [dir="rtl"] {
+    text-align: right;
+  }
+
+  /* Mobile header RTL */
+  [dir="rtl"] header .flex.items-center.justify-between {
+    flex-direction: row-reverse;
+  }
+
+  /* Mobile menu button position */
+  [dir="rtl"] header button[aria-label="Open menu"] {
+    order: 2;
+  }
+
+  /* Mobile logo position */
+  [dir="rtl"] header a[href="/"] {
+    order: 1;
+  }
+
+  /* Mobile actions position */
+  [dir="rtl"] header .flex.items-center.gap-2 {
+    order: 0;
+    flex-direction: row-reverse;
+  }
+
+  /* Mobile product grid - ensure consistent spacing */
+  [dir="rtl"] .grid.grid-cols-2 {
+    direction: rtl;
+  }
+
+  /* Mobile product card text alignment */
+  [dir="rtl"] .product-card .p-4 {
+    text-align: right;
+  }
+
+  /* Mobile flex column should remain column */
+  [dir="rtl"] .flex.flex-col {
+    flex-direction: column;
+  }
+
+  /* Mobile navigation links */
+  [dir="rtl"] nav ul li a {
+    flex-direction: row-reverse;
+  }
+
+  /* Mobile cart item layout */
+  [dir="rtl"] .flex.gap-3,
+  [dir="rtl"] .flex.gap-4 {
+    flex-direction: row-reverse;
+  }
+
+  /* Except for vertical stacks */
+  [dir="rtl"] .flex.flex-col.gap-3,
+  [dir="rtl"] .flex.flex-col.gap-4 {
+    flex-direction: column;
+  }
+
+  /* Mobile form sections */
+  [dir="rtl"] .space-y-4 > * {
+    text-align: right;
+  }
+
+  /* Mobile checkout steps */
+  [dir="rtl"] .flex.items-center.justify-between {
+    flex-direction: row;
+  }
+
+  /* Mobile order tracking progress */
+  [dir="rtl"] .flex.items-center.flex-1 {
+    flex-direction: row;
+  }
+
+  /* Mobile price display */
+  [dir="rtl"] .flex.items-center.gap-2.flex-wrap {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+  }
+
+  /* Ensure badges stay in correct position on mobile */
+  [dir="rtl"] .absolute.top-3.left-3 {
+    left: auto;
+    right: 0.75rem;
+  }
+
+  [dir="rtl"] .absolute.top-3.right-3 {
+    right: auto;
+    left: 0.75rem;
+  }
+}
+
+/* ==================== Tablet RTL Fixes ==================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  [dir="rtl"] .md\\:flex-row {
+    flex-direction: row-reverse;
+  }
+
+  [dir="rtl"] .md\\:grid-cols-3 {
+    direction: rtl;
+  }
+}
+
+/* ==================== Desktop RTL Fixes ==================== */
+
+@media (min-width: 1024px) {
+  [dir="rtl"] .lg\\:flex-row {
+    flex-direction: row-reverse;
+  }
+
+  [dir="rtl"] nav.hidden.lg\\:flex {
+    flex-direction: row-reverse;
+  }
+
+  [dir="rtl"] .lg\\:grid-cols-4 {
+    direction: rtl;
+  }
+}
+
+/* ==================== Component-Specific RTL Fixes ==================== */
+
+/* Hero section RTL */
+[dir="rtl"] .hero-content {
+  text-align: right;
+}
+
+/* Features section RTL */
+[dir="rtl"] .text-center {
+  text-align: center; /* Keep centered items centered */
+}
+
+/* Order status tracker RTL */
+[dir="rtl"] .flex.items-center.justify-between > .flex.items-center.flex-1 {
+  flex-direction: row;
+}
+
+/* Cart/Checkout summary RTL */
+[dir="rtl"] .flex.justify-between {
+  flex-direction: row;
+}
+
+/* Admin panel RTL - maintain LTR for better UX */
+[dir="rtl"] .admin-layout {
+  direction: ltr;
+}
+
+[dir="rtl"] .admin-layout .content-area {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Toast notifications - keep centered */
+[dir="rtl"] .react-hot-toast {
+  direction: ltr;
+}
+
+/* Modal dialogs RTL */
+[dir="rtl"] .modal-content {
+  text-align: right;
+}
+
+/* Search modal RTL */
+[dir="rtl"] .search-modal input {
+  text-align: right;
+  padding-right: 2.5rem;
+  padding-left: 1rem;
+}
+
+[dir="rtl"] .search-modal .search-icon {
+  right: 0.75rem;
+  left: auto;
+}
+
+/* Breadcrumbs RTL */
+[dir="rtl"] .breadcrumbs {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumbs svg {
+  transform: rotate(180deg);
 }

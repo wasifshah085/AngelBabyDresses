@@ -7,6 +7,7 @@ import { FiSearch, FiFilter, FiEye, FiMessageCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { PageLoader } from '../../components/common/Loader';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -98,7 +99,7 @@ const CustomDesigns = () => {
               <div className="aspect-video bg-gray-100 relative">
                 {design.images?.[0]?.url ? (
                   <img
-                    src={design.images[0].url}
+                    src={getImageUrl(design.images[0].url)}
                     alt="Design"
                     className="w-full h-full object-cover"
                   />

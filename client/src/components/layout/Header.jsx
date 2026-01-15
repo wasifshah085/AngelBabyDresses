@@ -44,7 +44,8 @@ const Header = () => {
     { name: t('common.products'), href: '/shop' },
     { name: t('common.newArrivals'), href: '/shop?filter=new' },
     { name: t('common.sale'), href: '/shop?filter=sale', highlight: true },
-    { name: t('common.customDesign'), href: '/custom-design' }
+    { name: t('common.customDesign'), href: '/custom-design' },
+    { name: t('orders.trackOrder'), href: '/track-order' }
   ];
 
   return (

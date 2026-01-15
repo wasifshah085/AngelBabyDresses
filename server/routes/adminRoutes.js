@@ -12,6 +12,11 @@ import {
   getOrders,
   getOrderById,
   updateOrderStatus,
+  approveAdvancePayment,
+  rejectAdvancePayment,
+  approveFinalPayment,
+  rejectFinalPayment,
+  requestFinalPayment,
   getCustomDesigns,
   updateCustomDesign,
   addDesignMessage,
@@ -60,6 +65,11 @@ router.delete('/categories/:id', deleteCategory);
 router.get('/orders', getOrders);
 router.get('/orders/:id', getOrderById);
 router.put('/orders/:id/status', updateOrderStatus);
+router.put('/orders/:id/approve-advance', approveAdvancePayment);
+router.put('/orders/:id/reject-advance', rejectAdvancePayment);
+router.put('/orders/:id/approve-final', approveFinalPayment);
+router.put('/orders/:id/reject-final', rejectFinalPayment);
+router.put('/orders/:id/request-final-payment', requestFinalPayment);
 
 // Custom Designs
 router.get('/custom-designs', getCustomDesigns);

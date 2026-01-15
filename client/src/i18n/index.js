@@ -24,6 +24,20 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
+    },
+    // Return the key formatted nicely if no translation is found
+    // This prevents raw keys like "orders.trackOrder" from showing
+    returnEmptyString: false,
+    // When a key is missing, try to make it human-readable
+    parseMissingKeyHandler: (key) => {
+      // Convert "orders.trackOrder" to "Track Order"
+      const parts = key.split('.');
+      const lastPart = parts[parts.length - 1];
+      // Convert camelCase to Title Case with spaces
+      return lastPart
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str) => str.toUpperCase())
+        .trim();
     }
   });
 

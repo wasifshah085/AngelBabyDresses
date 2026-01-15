@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { FiEdit3, FiEye, FiChevronRight, FiPlus } from 'react-icons/fi';
 import { customDesignAPI } from '../services/api';
 import { PageLoader } from '../components/common/Loader';
+import { getImageUrl } from '../utils/imageUrl';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -68,7 +69,7 @@ const MyDesigns = () => {
                 <div className="aspect-video bg-gray-100 relative">
                   {design.images?.[0]?.url ? (
                     <img
-                      src={design.images[0].url}
+                      src={getImageUrl(design.images[0].url)}
                       alt={t('customDesign.designImage')}
                       className="w-full h-full object-cover"
                     />

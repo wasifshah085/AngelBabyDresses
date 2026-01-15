@@ -9,6 +9,7 @@ import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
 import { PageLoader } from '../../components/common/Loader';
 import ImageLightbox from '../../components/common/ImageLightbox';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Products = () => {
   const { t } = useTranslation();
@@ -128,7 +129,7 @@ const Products = () => {
                       <div className="flex items-center gap-3">
                         <div className="relative group">
                           <img
-                            src={product.images?.[0]?.url || 'https://placehold.co/100x100/FFC0CB/333?text=No+Image'}
+                            src={getImageUrl(product.images?.[0]?.url) || 'https://placehold.co/100x100/FFC0CB/333?text=No+Image'}
                             alt={product.name?.[language] || product.name?.en}
                             className="w-12 h-12 object-cover rounded-lg cursor-pointer"
                             onClick={() => {

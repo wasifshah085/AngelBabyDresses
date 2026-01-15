@@ -12,6 +12,7 @@ import { useAuthStore, useCartStore, useLanguageStore, useUIStore } from '../sto
 import { PageLoader } from '../components/common/Loader';
 import ProductCard from '../components/product/ProductCard';
 import ImageLightbox from '../components/common/ImageLightbox';
+import { getImageUrl } from '../utils/imageUrl';
 
 import 'swiper/css';
 import 'swiper/css/free-mode';
@@ -180,7 +181,7 @@ const ProductDetail = () => {
         id: `${product._id}-${selectedAge}-${selectedColor?.name || 'default'}`,
         productId: product._id,
         name: productName,
-        image: product.images?.[0]?.url,
+        image: getImageUrl(product.images?.[0]?.url),
         price: selectedPricing.currentPrice,
         ageRange: selectedAge,
         color: selectedColor,
@@ -237,7 +238,7 @@ const ProductDetail = () => {
                   product.images.map((image, index) => (
                     <SwiperSlide key={index}>
                       <img
-                        src={image.url}
+                        src={getImageUrl(image.url)}
                         alt={`${productName} - ${index + 1}`}
                         className="w-full h-full object-cover cursor-pointer"
                         onClick={() => {
@@ -284,7 +285,7 @@ const ProductDetail = () => {
                   <SwiperSlide key={index} className="cursor-pointer">
                     <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                       <img
-                        src={image.url}
+                        src={getImageUrl(image.url)}
                         alt={`${productName} thumbnail - ${index + 1}`}
                         className="w-full h-full object-cover"
                       />

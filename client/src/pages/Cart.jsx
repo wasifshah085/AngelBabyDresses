@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { cartAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
+import { getImageUrl } from '../utils/imageUrl';
 
 const Cart = () => {
   const { t } = useTranslation();
@@ -162,7 +163,7 @@ const Cart = () => {
                   <div key={item._id || item.id} className="flex gap-4 p-4 bg-white rounded-xl shadow-sm">
                     <Link to={`/product/${itemSlug}`} className="shrink-0">
                       <img
-                        src={itemImage}
+                        src={getImageUrl(itemImage)}
                         alt={itemName}
                         className="w-24 h-24 object-cover rounded-lg"
                       />

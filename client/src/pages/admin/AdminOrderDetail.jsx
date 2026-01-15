@@ -4,20 +4,29 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiArrowLeft, FiPackage, FiMapPin, FiCreditCard, FiTruck, FiPrinter } from 'react-icons/fi';
+import { FiArrowLeft, FiPackage, FiMapPin, FiCreditCard, FiTruck, FiPrinter, FiCheck, FiX, FiImage, FiClock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
 import { PageLoader } from '../../components/common/Loader';
 import Loader from '../../components/common/Loader';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-blue-100 text-blue-800',
   processing: 'bg-purple-100 text-purple-800',
   shipped: 'bg-indigo-100 text-indigo-800',
+  out_for_delivery: 'bg-orange-100 text-orange-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800'
+};
+
+const paymentStatusLabels = {
+  pending: 'Pending',
+  submitted: 'Submitted - Review Required',
+  approved: 'Approved',
+  rejected: 'Rejected'
 };
 
 const AdminOrderDetail = () => {
@@ -26,6 +35,8 @@ const AdminOrderDetail = () => {
   const { language } = useLanguageStore();
   const queryClient = useQueryClient();
   const [updating, setUpdating] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(null); // 'advance' or 'final'
 
   const { register, handleSubmit } = useForm();
 
@@ -44,6 +55,65 @@ const AdminOrderDetail = () => {
     onError: (error) => {
       toast.error(error.response?.data?.message || t('messages.error'));
       setUpdating(false);
+    }
+  });
+
+  const approveAdvanceMutation = useMutation({
+    mutationFn: () => managementAPI.approveAdvancePayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-order', id]);
+      toast.success('Advance payment approved!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
+    }
+  });
+
+  const rejectAdvanceMutation = useMutation({
+    mutationFn: (reason) => managementAPI.rejectAdvancePayment(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-order', id]);
+      toast.success('Advance payment rejected');
+      setShowRejectModal(null);
+      setRejectReason('');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
+    }
+  });
+
+  const approveFinalMutation = useMutation({
+    mutationFn: () => managementAPI.approveFinalPayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-order', id]);
+      toast.success('Final payment approved!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
+    }
+  });
+
+  const rejectFinalMutation = useMutation({
+    mutationFn: (reason) => managementAPI.rejectFinalPayment(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-order', id]);
+      toast.success('Final payment rejected');
+      setShowRejectModal(null);
+      setRejectReason('');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
+    }
+  });
+
+  const requestFinalMutation = useMutation({
+    mutationFn: () => managementAPI.requestFinalPayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-order', id]);
+      toast.success('Final payment request sent to customer!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
     }
   });
 
@@ -73,8 +143,47 @@ const AdminOrderDetail = () => {
         <title>{t('admin.orderDetails')} #{order.orderNumber} | Angel Baby Dresses</title>
       </Helmet>
 
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="font-heading font-semibold text-lg mb-4">
+              Reject {showRejectModal === 'advance' ? 'Advance' : 'Final'} Payment
+            </h3>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Enter rejection reason..."
+              className="input mb-4"
+              rows={3}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowRejectModal(null); setRejectReason(''); }}
+                className="btn btn-outline flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (showRejectModal === 'advance') {
+                    rejectAdvanceMutation.mutate(rejectReason);
+                  } else {
+                    rejectFinalMutation.mutate(rejectReason);
+                  }
+                }}
+                disabled={rejectAdvanceMutation.isPending || rejectFinalMutation.isPending}
+                className="btn bg-red-500 text-white hover:bg-red-600 flex-1"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <Link
             to="/admin/orders"
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
@@ -91,7 +200,7 @@ const AdminOrderDetail = () => {
           </button>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-heading font-bold text-gray-900">
               {t('orders.orderNumber')}: {order.orderNumber}
@@ -111,6 +220,122 @@ const AdminOrderDetail = () => {
           </span>
         </div>
 
+        {/* Payment Review Section */}
+        {(order.advancePayment?.status === 'submitted' || order.finalPayment?.status === 'submitted') && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <h3 className="font-heading font-semibold text-yellow-800 mb-4 flex items-center gap-2">
+              <FiClock className="w-5 h-5" />
+              Payment Review Required
+            </h3>
+
+            {/* Advance Payment Review */}
+            {order.advancePayment?.status === 'submitted' && (
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium">Advance Payment (50%)</h4>
+                  <span className="text-lg font-semibold text-primary-600">
+                    Rs. {order.advancePayment.amount?.toLocaleString()}
+                  </span>
+                </div>
+                {order.advancePayment.screenshot?.url && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-500 mb-2">Payment Screenshot:</p>
+                    <a
+                      href={order.advancePayment.screenshot.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block"
+                    >
+                      <img
+                        src={order.advancePayment.screenshot.url}
+                        alt="Payment proof"
+                        className="max-h-48 rounded-lg border hover:opacity-80"
+                      />
+                    </a>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Submitted: {new Date(order.advancePayment.submittedAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => approveAdvanceMutation.mutate()}
+                    disabled={approveAdvanceMutation.isPending}
+                    className="btn bg-green-500 text-white hover:bg-green-600 flex-1"
+                  >
+                    {approveAdvanceMutation.isPending ? <Loader size="sm" /> : (
+                      <>
+                        <FiCheck className="w-4 h-4 mr-2" />
+                        Approve
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowRejectModal('advance')}
+                    className="btn bg-red-500 text-white hover:bg-red-600 flex-1"
+                  >
+                    <FiX className="w-4 h-4 mr-2" />
+                    Reject
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Final Payment Review */}
+            {order.finalPayment?.status === 'submitted' && (
+              <div className="bg-white rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium">Final Payment (50%)</h4>
+                  <span className="text-lg font-semibold text-primary-600">
+                    Rs. {order.finalPayment.amount?.toLocaleString()}
+                  </span>
+                </div>
+                {order.finalPayment.screenshot?.url && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-500 mb-2">Payment Screenshot:</p>
+                    <a
+                      href={order.finalPayment.screenshot.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block"
+                    >
+                      <img
+                        src={order.finalPayment.screenshot.url}
+                        alt="Payment proof"
+                        className="max-h-48 rounded-lg border hover:opacity-80"
+                      />
+                    </a>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Submitted: {new Date(order.finalPayment.submittedAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => approveFinalMutation.mutate()}
+                    disabled={approveFinalMutation.isPending}
+                    className="btn bg-green-500 text-white hover:bg-green-600 flex-1"
+                  >
+                    {approveFinalMutation.isPending ? <Loader size="sm" /> : (
+                      <>
+                        <FiCheck className="w-4 h-4 mr-2" />
+                        Approve
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowRejectModal('final')}
+                    className="btn bg-red-500 text-white hover:bg-red-600 flex-1"
+                  >
+                    <FiX className="w-4 h-4 mr-2" />
+                    Reject
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Order Items */}
           <div className="lg:col-span-2 space-y-6">
@@ -123,7 +348,7 @@ const AdminOrderDetail = () => {
                 {order.items?.map((item, index) => (
                   <div key={index} className="flex gap-4 pb-4 border-b last:border-0">
                     <img
-                      src={item.product?.images?.[0]?.url || item.image}
+                      src={getImageUrl(item.product?.images?.[0]?.url || item.image)}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg"
                     />
@@ -169,7 +394,7 @@ const AdminOrderDetail = () => {
                   <p className="font-medium text-gray-900">{order.shippingAddress?.fullName}</p>
                   <p>{order.shippingAddress?.address}</p>
                   <p>
-                    {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.postalCode}
+                    {order.shippingAddress?.city}, {order.shippingAddress?.province || order.shippingAddress?.state} {order.shippingAddress?.postalCode}
                   </p>
                   <p>{order.shippingAddress?.phone}</p>
                 </div>
@@ -179,10 +404,10 @@ const AdminOrderDetail = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Order Summary */}
+            {/* Payment Summary */}
             <div className="bg-gray-50 rounded-xl p-6">
               <h2 className="font-heading font-semibold text-gray-900 mb-4">
-                {t('cart.orderSummary')}
+                Payment Summary
               </h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -206,6 +431,38 @@ const AdminOrderDetail = () => {
                   <span>{t('cart.total')}</span>
                   <span className="text-primary-600">Rs. {order.total?.toLocaleString()}</span>
                 </div>
+
+                {/* Payment Breakdown */}
+                <div className="mt-4 pt-4 border-t border-dashed space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Advance (50%)</span>
+                    <div className="text-right">
+                      <span className="font-medium">Rs. {order.advancePayment?.amount?.toLocaleString()}</span>
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                        order.advancePayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
+                        order.advancePayment?.status === 'submitted' ? 'bg-yellow-100 text-yellow-700' :
+                        order.advancePayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {paymentStatusLabels[order.advancePayment?.status] || 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Final (50%)</span>
+                    <div className="text-right">
+                      <span className="font-medium">Rs. {order.finalPayment?.amount?.toLocaleString()}</span>
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                        order.finalPayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
+                        order.finalPayment?.status === 'submitted' ? 'bg-yellow-100 text-yellow-700' :
+                        order.finalPayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {paymentStatusLabels[order.finalPayment?.status] || 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-4 pt-4 border-t">
@@ -213,13 +470,19 @@ const AdminOrderDetail = () => {
                   <FiCreditCard className="w-4 h-4" />
                   {t('checkout.paymentMethod')}
                 </div>
-                <p className="font-medium capitalize">{order.paymentMethod}</p>
-                <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${
-                  order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {t(`orders.payment.${order.paymentStatus}`)}
-                </span>
+                <p className="font-medium capitalize">{order.paymentMethod?.replace('_', ' ')}</p>
               </div>
+
+              {/* Request Final Payment Button */}
+              {order.advancePayment?.status === 'approved' && order.finalPayment?.status === 'pending' && order.status !== 'delivered' && (
+                <button
+                  onClick={() => requestFinalMutation.mutate()}
+                  disabled={requestFinalMutation.isPending}
+                  className="btn btn-primary w-full mt-4"
+                >
+                  {requestFinalMutation.isPending ? <Loader size="sm" /> : 'Request Final Payment'}
+                </button>
+              )}
             </div>
 
             {/* Update Status */}
@@ -241,6 +504,7 @@ const AdminOrderDetail = () => {
                     <option value="confirmed">{t('orders.status.confirmed')}</option>
                     <option value="processing">{t('orders.status.processing')}</option>
                     <option value="shipped">{t('orders.status.shipped')}</option>
+                    <option value="out_for_delivery">{t('orders.status.out_for_delivery')}</option>
                     <option value="delivered">{t('orders.status.delivered')}</option>
                     <option value="cancelled">{t('orders.status.cancelled')}</option>
                   </select>
@@ -262,10 +526,10 @@ const AdminOrderDetail = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('admin.note')}
+                    {t('admin.adminNotes') || 'Admin Notes'}
                   </label>
                   <textarea
-                    {...register('note')}
+                    {...register('adminNotes')}
                     rows={2}
                     className="input"
                     placeholder={t('admin.statusNote')}
