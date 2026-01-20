@@ -281,8 +281,8 @@ const Cart = () => {
                   )}
 
                   <div className="flex justify-between">
-                    <span className="text-gray-600">{t('cart.shipping')}</span>
-                    <span className="font-medium">{t('cart.calculatedAtCheckout')}</span>
+                    <span className="text-gray-600">{t('cart.shippingTitle')}</span>
+                    <span className="font-medium text-sm text-gray-500">{t('cart.shippingInfo')}</span>
                   </div>
 
                   <hr className="my-4" />

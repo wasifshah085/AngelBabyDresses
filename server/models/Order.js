@@ -86,13 +86,18 @@ const orderSchema = new mongoose.Schema({
     },
     rejectionReason: String
   },
-  // Final payment (50%) - paid when order is ready
+  // Final payment (50% + shipping) - paid via COD when order is delivered
   finalPayment: {
     amount: { type: Number, default: 0 },
+    method: {
+      type: String,
+      enum: ['cod', 'online'],
+      default: 'cod'
+    },
     status: {
       type: String,
-      enum: ['pending', 'submitted', 'approved', 'rejected', 'not_required'],
-      default: 'pending'
+      enum: ['pending', 'submitted', 'approved', 'rejected', 'not_required', 'cod_pending', 'cod_collected'],
+      default: 'cod_pending'
     },
     screenshot: {
       url: String,
@@ -106,10 +111,16 @@ const orderSchema = new mongoose.Schema({
     },
     rejectionReason: String
   },
+  // Order weight in grams (set by admin when order is processed)
+  // Used to calculate shipping: Rs 350 per kg
+  orderWeight: {
+    type: Number,
+    default: 0
+  },
   // Overall payment status
   paymentStatus: {
     type: String,
-    enum: ['pending_advance', 'advance_submitted', 'advance_approved', 'pending_final', 'final_submitted', 'fully_paid', 'rejected'],
+    enum: ['pending_advance', 'advance_submitted', 'advance_approved', 'pending_final', 'final_submitted', 'fully_paid', 'cod_pending', 'cod_collected', 'rejected'],
     default: 'pending_advance'
   },
   shippingAddress: {

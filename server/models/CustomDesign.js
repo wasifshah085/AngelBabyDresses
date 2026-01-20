@@ -13,7 +13,7 @@ const customDesignSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ['upload', 'builder'],
-    required: true
+    default: 'upload'
   },
   // For upload type
   uploadedImages: [{
@@ -40,7 +40,7 @@ const customDesignSchema = new mongoose.Schema({
   productType: {
     type: String,
     enum: ['dress', 'shirt', 'pants', 'outfit', 'accessories', 'other'],
-    required: true
+    default: 'dress'
   },
   size: {
     type: String,

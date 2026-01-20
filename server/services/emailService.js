@@ -47,10 +47,10 @@ export const emailTemplates = {
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #FFE4E9;">
-          <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" />
+          <img src="${item.image || ''}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" />
         </td>
         <td style="padding: 10px; border-bottom: 1px solid #FFE4E9;">${item.name}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #FFE4E9;">${item.size} / ${item.color?.name || '-'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #FFE4E9;">${item.ageRange || item.size || '-'} / ${item.color?.name || '-'}</td>
         <td style="padding: 10px; border-bottom: 1px solid #FFE4E9;">${item.quantity}</td>
         <td style="padding: 10px; border-bottom: 1px solid #FFE4E9;">Rs. ${item.price * item.quantity}</td>
       </tr>
@@ -274,6 +274,100 @@ export const emailTemplates = {
             <p>${isUrdu
               ? 'براہ کرم اپنے اکاؤنٹ میں لاگ ان کر کے آرڈر کی تصدیق کریں۔'
               : 'Please log in to your account to confirm and place the order.'}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return { subject, html };
+  },
+
+  // Admin notification for new order
+  adminNewOrder: (order) => {
+    const subject = `New Order - ${order.orderNumber} - Payment Verification Required`;
+
+    const itemsHtml = order.items.map(item => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.ageRange || '-'}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.color?.name || '-'}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.quantity}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">Rs. ${item.price * item.quantity}</td>
+      </tr>
+    `).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
+          .header { background: #FF69B4; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; }
+          .alert { background: #FFF3CD; border: 1px solid #FFECB5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+          .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          th { background: #f0f0f0; padding: 10px; text-align: left; }
+          .btn { display: inline-block; background: #FF69B4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Order Received!</h1>
+          </div>
+          <div class="content">
+            <div class="alert">
+              <strong>Action Required:</strong> Please verify the advance payment for this order.
+            </div>
+
+            <div class="info-box">
+              <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+              <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+              <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+              <p><strong>Payment Status:</strong> ${order.paymentStatus}</p>
+            </div>
+
+            <h3>Customer Details</h3>
+            <div class="info-box">
+              <p><strong>Name:</strong> ${order.shippingAddress.fullName}</p>
+              <p><strong>Phone:</strong> ${order.shippingAddress.phone}</p>
+              <p><strong>Email:</strong> ${order.shippingAddress.email || '-'}</p>
+              <p><strong>Address:</strong> ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.province}</p>
+            </div>
+
+            <h3>Order Items</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Age</th>
+                  <th>Color</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="info-box">
+              <p><strong>Subtotal:</strong> Rs. ${order.subtotal}</p>
+              <p><strong>Advance Payment (50%):</strong> Rs. ${order.advancePayment.amount}</p>
+              <p><strong>Final Payment (COD):</strong> Rs. ${order.finalPayment.amount} + Shipping</p>
+            </div>
+
+            ${order.advancePayment.screenshot?.url ? `
+              <p><strong>Payment Screenshot:</strong></p>
+              <p><a href="${order.advancePayment.screenshot.url}" target="_blank">View Screenshot</a></p>
+            ` : '<p><em>No payment screenshot uploaded yet.</em></p>'}
+
+            <a href="${process.env.CLIENT_URL}/admin/orders/${order._id}" class="btn">
+              Review Order in Admin Panel
+            </a>
           </div>
         </div>
       </body>

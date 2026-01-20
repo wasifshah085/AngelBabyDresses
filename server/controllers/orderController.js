@@ -62,14 +62,11 @@ export const createOrder = async (req, res) => {
     // Calculate totals
     const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Get shipping cost from settings
-    const settings = await Setting.getSettings();
-    let shippingCost = settings.shipping.standardShippingRate;
-    if (subtotal >= settings.shipping.freeShippingThreshold) {
-      shippingCost = 0;
-    }
+    // Shipping cost will be calculated by admin after weighing the parcel.
+    const shippingCost = 0;
+    const totalWeight = 0; // Will be set by admin
 
-    const total = subtotal + shippingCost - cart.discount;
+    const total = subtotal - cart.discount; // Shipping cost will be added later
 
     // Generate order number
     const date = new Date();
@@ -78,9 +75,10 @@ export const createOrder = async (req, res) => {
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     const orderNumber = `ABD${year}${month}${random}`;
 
-    // Calculate advance payment (50%)
-    const advanceAmount = Math.ceil(total / 2);
-    const finalAmount = total - advanceAmount;
+    // Calculate advance payment (50% of product cost - paid online)
+    // Final payment (50% + shipping) is paid via COD
+    const advanceAmount = Math.ceil(subtotal / 2);
+    const finalAmount = subtotal - advanceAmount; // Shipping will be added to this later.
 
     // Handle screenshot upload if provided
     let screenshotData = null;
@@ -117,9 +115,9 @@ export const createOrder = async (req, res) => {
 
         fs.writeFileSync(filePath, screenshot.buffer);
 
-        const baseUrl = process.env.API_URL || '';
+        // Store relative URL - frontend will handle making it absolute
         screenshotData = {
-          url: `${baseUrl}/uploads/payments/${uniqueName}`,
+          url: `/uploads/payments/${uniqueName}`,
           publicId: `local_payments_${uniqueName}`
         };
       }
@@ -132,6 +130,7 @@ export const createOrder = async (req, res) => {
       items: orderItems,
       subtotal,
       shippingCost,
+      orderWeight: totalWeight,
       discount: cart.discount,
       couponCode: cart.couponCode,
       total,
@@ -146,7 +145,8 @@ export const createOrder = async (req, res) => {
       },
       finalPayment: {
         amount: finalAmount,
-        status: 'pending'
+        method: 'cod',
+        status: 'cod_pending'
       },
       paymentStatus: screenshotData ? 'advance_submitted' : 'pending_advance'
     });
@@ -194,16 +194,28 @@ export const createOrder = async (req, res) => {
       sendWhatsAppMessage(shippingAddress.phone, message);
     }
 
+    // Send admin notification for payment verification
+    const adminEmail = process.env.ADMIN_EMAIL || settings.email || 'admin@angelbabydresses.com';
+    const { subject: adminSubject, html: adminHtml } = emailTemplates.adminNewOrder(order);
+    sendEmail({
+      to: adminEmail,
+      subject: adminSubject,
+      html: adminHtml
+    });
+
     res.status(201).json({
       success: true,
       message: 'Order placed successfully. Please submit advance payment to confirm.',
       data: order,
       paymentDetails: {
         advanceAmount: advanceAmount,
+        advanceMethod: 'online',
         finalAmount: finalAmount,
+        finalMethod: 'cod',
+        shippingNote: 'Shipping charges (Rs 350/kg) will be added to COD amount based on actual weight',
         accounts: {
-          easypaisa: '03451504434',
-          jazzcash: '03451504434',
+          easypaisa: '03471504434',
+          jazzcash: '03471504434',
           bank: {
             name: 'HBL',
             accountNumber: '16817905812303',
@@ -361,9 +373,9 @@ export const submitAdvancePayment = async (req, res) => {
 
       fs.writeFileSync(filePath, req.file.buffer);
 
-      const baseUrl = process.env.API_URL || '';
+      // Store relative URL - frontend will handle making it absolute
       screenshotData = {
-        url: `${baseUrl}/uploads/payments/${uniqueName}`,
+        url: `/uploads/payments/${uniqueName}`,
         publicId: `local_payments_${uniqueName}`
       };
     }
@@ -460,9 +472,9 @@ export const submitFinalPayment = async (req, res) => {
 
       fs.writeFileSync(filePath, req.file.buffer);
 
-      const baseUrl = process.env.API_URL || '';
+      // Store relative URL - frontend will handle making it absolute
       screenshotData = {
-        url: `${baseUrl}/uploads/payments/${uniqueName}`,
+        url: `/uploads/payments/${uniqueName}`,
         publicId: `local_payments_${uniqueName}`
       };
     }
@@ -496,11 +508,11 @@ export const getPaymentAccounts = async (req, res) => {
       success: true,
       data: {
         easypaisa: {
-          number: '03451504434',
+          number: '03471504434',
           name: 'Quratulain Syed'
         },
         jazzcash: {
-          number: '03451504434',
+          number: '03471504434',
           name: 'Quratulain Syed'
         },
         bank: {

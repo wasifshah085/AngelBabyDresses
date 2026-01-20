@@ -36,6 +36,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
+      API_URL: ${API_URL:-https://api.angelbabydresses.com}
       MONGODB_URI: mongodb://${MONGO_APP_USER:-angelbaby}:${MONGO_APP_PASSWORD}@mongodb:27017/angel-baby-dresses?authSource=angel-baby-dresses
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRE: ${JWT_EXPIRE:-30d}

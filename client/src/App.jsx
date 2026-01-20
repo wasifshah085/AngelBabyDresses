@@ -46,6 +46,7 @@ import AdminSettings from './pages/admin/Settings';
 // Components
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminRoute from './components/common/AdminRoute';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Store
 import { useLanguageStore, useAuthStore } from './store/useStore';
@@ -63,6 +64,7 @@ function App() {
 
   return (
     <div className={`min-h-screen ${direction === 'rtl' ? 'font-urdu' : 'font-body'}`}>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<MainLayout />}>

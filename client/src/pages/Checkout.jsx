@@ -71,7 +71,7 @@ const Checkout = () => {
       name: 'EasyPaisa',
       icon: FiCreditCard,
       description: t('checkout.easypaisaDescription'),
-      account: '03451504434',
+      account: '03471504434',
       accountHolder: 'Quratulain Syed'
     },
     {
@@ -79,7 +79,7 @@ const Checkout = () => {
       name: 'JazzCash',
       icon: FiCreditCard,
       description: t('checkout.jazzcashDescription'),
-      account: '03451504434',
+      account: '03471504434',
       accountHolder: 'Quratulain Syed'
     },
     {
@@ -93,10 +93,10 @@ const Checkout = () => {
     }
   ];
 
-  const shippingCost = cart?.subtotal >= 3000 ? 0 : 200;
-  const total = (cart?.total || 0) + shippingCost;
-  const advanceAmount = Math.ceil(total / 2);
-  const finalAmount = total - advanceAmount;
+  const shippingCost = 0;
+  const total = cart?.total || 0;
+  const advanceAmount = Math.ceil((cart?.subtotal || 0) / 2);
+  const finalAmount = (cart?.subtotal || 0) - advanceAmount;
 
   const onAddressSubmit = (data) => {
     setSelectedAddress(data);
@@ -607,10 +607,8 @@ const Checkout = () => {
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('cart.shipping')}</span>
-                  <span className="font-medium">
-                    {shippingCost === 0 ? t('cart.free') : `Rs. ${shippingCost}`}
-                  </span>
+                  <span className="text-gray-600">{t('cart.shippingTitle')}</span>
+                  <span className="font-medium text-sm text-gray-500">{t('cart.shippingInfo')}</span>
                 </div>
 
                 <hr className="my-4" />
@@ -634,11 +632,7 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {shippingCost === 0 && (
-                <p className="text-sm text-green-600 mt-4">
-                  {t('checkout.freeShippingApplied')}
-                </p>
-              )}
+
             </div>
           </div>
         </div>

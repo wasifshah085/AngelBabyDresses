@@ -3,12 +3,9 @@ import { useAuthStore } from '../store/useStore';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Create axios instance
+// Create axios instance - don't set default Content-Type, let axios handle it
 const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: API_URL
 });
 
 // Request interceptor to add auth token
@@ -91,11 +88,9 @@ export const cartAPI = {
 // Orders API
 export const ordersAPI = {
   create: (data) => {
-    // If FormData (with screenshot), send as multipart
+    // If FormData (with screenshot), axios will auto-detect Content-Type
     if (data instanceof FormData) {
-      return api.post('/orders', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      return api.post('/orders', data);
     }
     return api.post('/orders', data);
   },
@@ -107,16 +102,12 @@ export const ordersAPI = {
   submitAdvancePayment: (id, screenshot) => {
     const formData = new FormData();
     formData.append('screenshot', screenshot);
-    return api.post(`/orders/${id}/advance-payment`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return api.post(`/orders/${id}/advance-payment`, formData);
   },
   submitFinalPayment: (id, screenshot) => {
     const formData = new FormData();
     formData.append('screenshot', screenshot);
-    return api.post(`/orders/${id}/final-payment`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return api.post(`/orders/${id}/final-payment`, formData);
   }
 };
 
@@ -133,9 +124,7 @@ export const customDesignAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.post('/custom-design', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return api.post('/custom-design', formData);
   },
   getMyDesigns: () => api.get('/custom-design/my-designs'),
   getById: (id) => api.get(`/custom-design/${id}`),
@@ -145,9 +134,7 @@ export const customDesignAPI = {
     if (data.attachments) {
       data.attachments.forEach(file => formData.append('attachments', file));
     }
-    return api.post(`/custom-design/${id}/message`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return api.post(`/custom-design/${id}/message`, formData);
   },
   acceptQuote: (id, data) => api.post(`/custom-design/${id}/accept`, data),
   cancel: (id) => api.put(`/custom-design/${id}/cancel`)
@@ -176,6 +163,7 @@ export const managementAPI = {
 
   // Products
   getProducts: (params) => api.get('/admin/products', { params }),
+  getProduct: (id) => api.get(`/admin/products/${id}`),
   createProduct: (data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -183,16 +171,24 @@ export const managementAPI = {
       // Skip undefined and null values
       if (value === undefined || value === null) return;
       if (key === 'images' && value && Array.isArray(value)) {
-        value.forEach(file => formData.append('images', file));
+        console.log('Appending images to FormData:', value);
+        value.forEach((file, index) => {
+          console.log(`Appending file ${index}:`, file.name, file.size, file.type);
+          formData.append('images', file);
+        });
       } else if (typeof value === 'object' && value !== null) {
         formData.append(key, JSON.stringify(value));
       } else {
         formData.append(key, value);
       }
     });
-    return api.post('/admin/products', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    // Debug: Log FormData entries
+    console.log('FormData entries:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+    // Don't set Content-Type - axios will set it automatically with boundary for FormData
+    return api.post('/admin/products', formData);
   },
   updateProduct: (id, data) => {
     const formData = new FormData();
@@ -208,9 +204,8 @@ export const managementAPI = {
         formData.append(key, value);
       }
     });
-    return api.put(`/admin/products/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    // Don't set Content-Type - axios will set it automatically with boundary for FormData
+    return api.put(`/admin/products/${id}`, formData);
   },
   deleteProduct: (id) => api.delete(`/admin/products/${id}`),
 
@@ -230,9 +225,8 @@ export const managementAPI = {
         formData.append(key, value);
       }
     });
-    return api.post('/admin/categories', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    // Don't set Content-Type - axios will set it automatically with boundary for FormData
+    return api.post('/admin/categories', formData);
   },
   updateCategory: (id, data) => {
     const formData = new FormData();
@@ -248,9 +242,8 @@ export const managementAPI = {
         formData.append(key, value);
       }
     });
-    return api.put(`/admin/categories/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    // Don't set Content-Type - axios will set it automatically with boundary for FormData
+    return api.put(`/admin/categories/${id}`, formData);
   },
   deleteCategory: (id) => api.delete(`/admin/categories/${id}`),
 
@@ -273,9 +266,7 @@ export const managementAPI = {
     if (data.attachments) {
       data.attachments.forEach(file => formData.append('attachments', file));
     }
-    return api.post(`/admin/custom-designs/${id}/message`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return api.post(`/admin/custom-designs/${id}/message`, formData);
   },
 
   // Customers
@@ -312,9 +303,7 @@ export const managementAPI = {
         formData.append(key, data[key]);
       }
     });
-    return api.put('/admin/settings', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return api.put('/admin/settings', formData);
   }
 };
 

@@ -1,11 +1,43 @@
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
-import { FiCheckCircle, FiPackage, FiArrowRight } from 'react-icons/fi';
+import { FiCheckCircle, FiClock, FiPackage, FiTruck, FiArrowRight } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const OrderSuccess = () => {
   const { orderNumber } = useParams();
   const { t } = useTranslation();
+
+  const steps = [
+    {
+      icon: FiClock,
+      title: t('orderSuccess.step1Title') || 'Payment Verification',
+      description: t('orderSuccess.step1Desc') || 'Our team will verify your advance payment within 1 hour. Please be patient while we confirm your payment.',
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-100'
+    },
+    {
+      icon: FiCheckCircle,
+      title: t('orderSuccess.step2Title') || 'Order Confirmation',
+      description: t('orderSuccess.step2Desc') || 'Once payment is verified, you\'ll receive a confirmation via email and WhatsApp. Your order will enter production.',
+      color: 'text-green-500',
+      bgColor: 'bg-green-100'
+    },
+    {
+      icon: FiPackage,
+      title: t('orderSuccess.step3Title') || 'Production & Quality Check',
+      description: t('orderSuccess.step3Desc') || 'Your dress will be carefully crafted (7-14 days). We\'ll notify you when it\'s ready for shipping.',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-100'
+    },
+    {
+      icon: FiTruck,
+      title: t('orderSuccess.step4Title') || 'Delivery & Final Payment',
+      description: t('orderSuccess.step4Desc') || 'Pay the remaining amount via Cash on Delivery when you receive your order.',
+      color: 'text-primary-500',
+      bgColor: 'bg-primary-100'
+    }
+  ];
 
   return (
     <>
@@ -13,43 +45,89 @@ const OrderSuccess = () => {
         <title>{t('orders.orderSuccess')} | Angel Baby Dresses</title>
       </Helmet>
 
-      <div className="container py-16">
-        <div className="max-w-lg mx-auto text-center">
-          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
-            <FiCheckCircle className="w-12 h-12 text-green-500" />
+      <div className="container py-12 lg:py-16">
+        <div className="max-w-2xl mx-auto">
+          {/* Success Header */}
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
+              <FiCheckCircle className="w-10 h-10 text-green-500" />
+            </div>
+
+            <h1 className="text-3xl font-heading font-bold text-gray-900 mb-3">
+              {t('orders.thankYou')}
+            </h1>
+
+            <p className="text-gray-600 mb-2">
+              {t('orders.orderPlaced')}
+            </p>
+
+            {orderNumber && (
+              <div className="inline-block bg-primary-50 px-6 py-3 rounded-lg mt-2">
+                <p className="text-sm text-gray-600">{t('orders.orderNumber')}</p>
+                <p className="text-xl font-bold text-primary-600">{orderNumber}</p>
+              </div>
+            )}
           </div>
 
-          <h1 className="text-3xl font-heading font-bold text-gray-900 mb-4">
-            {t('orders.thankYou')}
-          </h1>
-
-          <p className="text-gray-600 mb-2">
-            {t('orders.orderPlaced')}
-          </p>
-
-          {orderNumber && (
-            <p className="text-lg font-medium text-gray-900 mb-8">
-              {t('orders.orderNumber')}: <span className="text-primary-600">{orderNumber}</span>
-            </p>
-          )}
-
-          <div className="bg-primary-50 rounded-xl p-6 mb-8">
-            <FiPackage className="w-8 h-8 text-primary-500 mx-auto mb-3" />
-            <h2 className="font-semibold text-gray-900 mb-2">
-              {t('orders.whatNext')}
+          {/* What Happens Next */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 lg:p-8 mb-8">
+            <h2 className="text-xl font-heading font-bold text-gray-900 mb-6 text-center">
+              {t('orders.whatNext') || 'What Happens Next?'}
             </h2>
-            <p className="text-sm text-gray-600">
-              {t('orders.confirmationEmail')}
+
+            <div className="space-y-6">
+              {steps.map((step, index) => (
+                <div key={index} className="flex gap-4">
+                  <div className={`w-12 h-12 rounded-full ${step.bgColor} flex items-center justify-center flex-shrink-0`}>
+                    <step.icon className={`w-6 h-6 ${step.color}`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-gray-400">STEP {index + 1}</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
+                    <p className="text-sm text-gray-600">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Important Notice */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
+            <p className="text-yellow-800 text-sm text-center">
+              <strong>{t('common.note') || 'Note'}:</strong> {t('orderSuccess.verificationNote') || 'Payment verification typically takes less than 1 hour during business hours (10 AM - 8 PM). If you haven\'t received confirmation within 2 hours, please contact us.'}
             </p>
           </div>
 
+          {/* Contact Support */}
+          <div className="bg-green-50 rounded-xl p-6 text-center mb-8">
+            <FaWhatsapp className="w-8 h-8 text-green-500 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">
+              {t('orderSuccess.needHelp') || 'Need Help?'}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {t('orderSuccess.contactText') || 'If you have any questions about your order, feel free to reach out.'}
+            </p>
+            <a
+              href="https://wa.me/923471504434"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-green-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm"
+            >
+              <FaWhatsapp className="w-4 h-4" />
+              {t('orderSuccess.chatWhatsApp') || 'Chat on WhatsApp'}
+            </a>
+          </div>
+
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/my-orders" className="btn btn-primary">
-              {t('orders.viewOrders')}
-              <FiArrowRight className="w-5 h-5 ml-2" />
+            <Link to={`/orders`} className="btn btn-primary">
+              {t('orders.viewOrders') || 'View My Orders'}
+              <FiArrowRight className="w-5 h-5 ms-2" />
             </Link>
             <Link to="/shop" className="btn btn-outline">
-              {t('cart.continueShopping')}
+              {t('cart.continueShopping') || 'Continue Shopping'}
             </Link>
           </div>
         </div>

@@ -5,7 +5,8 @@ import { useMutation } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { useDropzone } from 'react-dropzone';
-import { FiUpload, FiX, FiCheck, FiImage, FiEdit3 } from 'react-icons/fi';
+import { FiUpload, FiX, FiImage } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { customDesignAPI } from '../services/api';
 import { useAuthStore } from '../store/useStore';
@@ -17,7 +18,6 @@ const CustomDesign = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const [designType, setDesignType] = useState('upload'); // 'upload' or 'builder'
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -73,7 +73,6 @@ const CustomDesign = () => {
     setLoading(true);
     createMutation.mutate({
       ...data,
-      designType,
       images: images.map(img => img.file)
     });
   };
@@ -94,49 +93,6 @@ const CustomDesign = () => {
           <p className="text-gray-600 max-w-2xl mx-auto">
             {t('customDesign.subtitle')}
           </p>
-        </div>
-
-        {/* Design Type Selection */}
-        <div className="flex justify-center gap-4 mb-10">
-          <button
-            onClick={() => setDesignType('upload')}
-            className={`flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all ${
-              designType === 'upload'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-primary-300'
-            }`}
-          >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              designType === 'upload' ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'
-            }`}>
-              <FiUpload className="w-6 h-6" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-gray-900">{t('customDesign.uploadDesign')}</p>
-              <p className="text-sm text-gray-500">{t('customDesign.uploadDesignDesc')}</p>
-            </div>
-            {designType === 'upload' && <FiCheck className="w-5 h-5 text-primary-500" />}
-          </button>
-
-          <button
-            onClick={() => setDesignType('builder')}
-            className={`flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all ${
-              designType === 'builder'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-primary-300'
-            }`}
-          >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              designType === 'builder' ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'
-            }`}>
-              <FiEdit3 className="w-6 h-6" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-gray-900">{t('customDesign.designBuilder')}</p>
-              <p className="text-sm text-gray-500">{t('customDesign.designBuilderDesc')}</p>
-            </div>
-            {designType === 'builder' && <FiCheck className="w-5 h-5 text-primary-500" />}
-          </button>
         </div>
 
         {/* Design Form */}
@@ -243,6 +199,35 @@ const CustomDesign = () => {
                   <p className="text-red-500 text-sm mt-1">{errors.quantity.message}</p>
                 )}
               </div>
+            </div>
+
+            {/* WhatsApp Number */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <span className="flex items-center gap-2">
+                  <FaWhatsapp className="w-4 h-4 text-green-500" />
+                  {t('customDesign.whatsappNumber') || 'WhatsApp Number'} *
+                </span>
+              </label>
+              <input
+                type="tel"
+                {...register('whatsappNumber', {
+                  required: t('validation.required'),
+                  pattern: {
+                    value: /^[0-9+]{10,15}$/,
+                    message: t('validation.invalidPhone') || 'Please enter a valid phone number'
+                  }
+                })}
+                className={`input ${errors.whatsappNumber ? 'input-error' : ''}`}
+                placeholder="03001234567"
+                dir="ltr"
+              />
+              {errors.whatsappNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.whatsappNumber.message}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {t('customDesign.whatsappNote') || 'Our designer will contact you on WhatsApp to discuss your design'}
+              </p>
             </div>
 
             {/* Preferred Colors */}

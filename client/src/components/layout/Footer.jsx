@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { FiFacebook, FiInstagram, FiTwitter, FiYoutube } from 'react-icons/fi';
+import { FiFacebook, FiInstagram } from 'react-icons/fi';
 import { FaTiktok, FaWhatsapp } from 'react-icons/fa';
 import { settingsAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
@@ -24,14 +24,6 @@ const Footer = () => {
     { name: t('common.newArrivals'), href: '/shop?filter=new' },
     { name: t('common.sale'), href: '/shop?filter=sale' },
     { name: t('common.customDesign'), href: '/custom-design' },
-    { name: t('footer.sizeGuide'), href: '/size-guide' }
-  ];
-
-  const customerService = [
-    { name: t('footer.contactUs'), href: '/contact' },
-    { name: t('footer.faq'), href: '/faq' },
-    { name: t('footer.shippingInfo'), href: '/shipping' },
-    { name: t('footer.returns'), href: '/returns' },
     { name: t('order.trackOrder'), href: '/track-order' }
   ];
 
@@ -56,15 +48,15 @@ const Footer = () => {
                 {t('home.newsletterDesc')}
               </p>
             </div>
-            <form className="flex flex-col sm:flex-row w-full max-w-md gap-2 sm:gap-0">
+            <form className="flex flex-col sm:flex-row w-full max-w-md gap-2 sm:gap-0 overflow-hidden">
               <input
                 type="email"
                 placeholder={t('home.emailPlaceholder')}
-                className="flex-1 min-w-0 px-4 py-3 rounded-lg sm:rounded-l-lg sm:rounded-r-none focus:outline-none"
+                className="w-full sm:flex-1 min-w-0 px-4 py-3 rounded-lg sm:rounded-s-lg sm:rounded-e-none focus:outline-none"
               />
               <button
                 type="submit"
-                className="px-6 py-3 bg-gray-900 text-white font-medium rounded-lg sm:rounded-l-none sm:rounded-r-lg hover:bg-gray-800 transition-colors whitespace-nowrap flex-shrink-0"
+                className="px-6 py-3 bg-gray-900 text-white font-medium rounded-lg sm:rounded-s-none sm:rounded-e-lg hover:bg-gray-800 transition-colors whitespace-nowrap flex-shrink-0"
               >
                 {t('home.subscribe')}
               </button>
@@ -75,7 +67,7 @@ const Footer = () => {
 
       {/* Main Footer */}
       <div className="container py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* About */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -117,25 +109,6 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-gray-400 hover:text-primary-400 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Customer Service */}
-          <div>
-            <h4 className="text-lg font-heading font-semibold text-white mb-4">
-              {t('footer.customerService')}
-            </h4>
-            <ul className="space-y-3">
-              {customerService.map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}

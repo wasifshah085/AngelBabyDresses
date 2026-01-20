@@ -220,12 +220,12 @@ const OrderDetail = () => {
                   <div className="grid sm:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">EasyPaisa</p>
-                      <p className="font-mono font-medium">03451504434</p>
+                      <p className="font-mono font-medium">03471504434</p>
                       <p className="text-gray-500 text-xs">Quratulain Syed</p>
                     </div>
                     <div>
                       <p className="text-gray-500">JazzCash</p>
-                      <p className="font-mono font-medium">03451504434</p>
+                      <p className="font-mono font-medium">03471504434</p>
                       <p className="text-gray-500 text-xs">Quratulain Syed</p>
                     </div>
                     <div>

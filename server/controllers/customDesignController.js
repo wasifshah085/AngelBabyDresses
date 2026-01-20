@@ -9,7 +9,6 @@ import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappServi
 export const createCustomDesign = async (req, res) => {
   try {
     const {
-      type,
       description,
       productType,
       size,
@@ -17,22 +16,32 @@ export const createCustomDesign = async (req, res) => {
       preferredColors,
       additionalNotes,
       referenceLinks,
-      customerContact,
-      builderData
+      whatsappNumber,
+      fabricPreference,
+      notes
     } = req.body;
 
     const designData = {
       user: req.user._id,
-      type,
+      type: 'upload', // Default to upload since builder is removed
       description,
-      productType,
+      productType: productType || 'dress',
       size,
       quantity,
-      preferredColors: preferredColors ? JSON.parse(preferredColors) : [],
-      additionalNotes,
+      preferredColors: preferredColors ? (typeof preferredColors === 'string' ? preferredColors.split(',').map(c => c.trim()) : preferredColors) : [],
+      additionalNotes: additionalNotes || notes,
       referenceLinks: referenceLinks ? JSON.parse(referenceLinks) : [],
-      customerContact: customerContact ? JSON.parse(customerContact) : {}
+      customerContact: {
+        whatsapp: whatsappNumber,
+        phone: whatsappNumber,
+        preferredContact: 'whatsapp'
+      }
     };
+
+    // Store fabric preference in additional notes if provided
+    if (fabricPreference) {
+      designData.additionalNotes = `${designData.additionalNotes || ''}\nFabric Preference: ${fabricPreference}`.trim();
+    }
 
     // Handle uploaded images
     if (req.files && req.files.length > 0) {
@@ -50,11 +59,6 @@ export const createCustomDesign = async (req, res) => {
           publicId: result.public_id
         });
       }
-    }
-
-    // Handle builder data
-    if (type === 'builder' && builderData) {
-      designData.builderData = JSON.parse(builderData);
     }
 
     const customDesign = await CustomDesign.create(designData);

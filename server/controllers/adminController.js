@@ -24,7 +24,10 @@ const isCloudinaryConfigured = () => {
   return process.env.CLOUDINARY_CLOUD_NAME &&
          process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder' &&
          process.env.CLOUDINARY_API_KEY &&
-         process.env.CLOUDINARY_API_KEY !== 'placeholder';
+         process.env.CLOUDINARY_API_KEY !== 'placeholder' &&
+         process.env.CLOUDINARY_API_SECRET &&
+         process.env.CLOUDINARY_API_SECRET !== 'placeholder' &&
+         !process.env.CLOUDINARY_API_SECRET.includes('*');
 };
 
 // Helper function to save file locally
@@ -44,13 +47,10 @@ const saveFileLocally = async (file, folder) => {
   // Write file
   fs.writeFileSync(filePath, file.buffer);
 
-  // Build absolute URL for production, relative for development
-  const baseUrl = process.env.NODE_ENV === 'production' && process.env.API_URL
-    ? process.env.API_URL
-    : `http://localhost:${process.env.PORT || 5000}`;
-
+  // Store relative URL - frontend will handle making it absolute
+  // This ensures URLs work regardless of deployment environment
   return {
-    url: `${baseUrl}/uploads/${folder}/${uniqueName}`,
+    url: `/uploads/${folder}/${uniqueName}`,
     publicId: `local_${folder}_${uniqueName}`
   };
 };
@@ -219,11 +219,46 @@ export const getProducts = async (req, res) => {
   }
 };
 
+// @desc    Get single product by ID (for editing)
+// @route   GET /api/admin/products/:id
+// @access  Admin
+export const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('category', 'name slug');
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Create product
 // @route   POST /api/admin/products
 // @access  Admin
 export const createProduct = async (req, res) => {
   try {
+    // Debug: Log what we receive
+    console.log('=== CREATE PRODUCT DEBUG ===');
+    console.log('req.files:', req.files);
+    console.log('req.file:', req.file);
+    console.log('req.body keys:', Object.keys(req.body));
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('============================');
+
     const productData = { ...req.body };
 
     // Parse JSON fields that come as strings from FormData
@@ -1060,11 +1095,12 @@ export const rejectFinalPayment = async (req, res) => {
   }
 };
 
-// @desc    Request final payment from customer
+// @desc    Set order weight and prepare for shipping (COD)
 // @route   PUT /api/admin/orders/:id/request-final-payment
 // @access  Admin
 export const requestFinalPayment = async (req, res) => {
   try {
+    const { weightInKg } = req.body;
     const order = await Order.findById(req.params.id).populate('user');
 
     if (!order) {
@@ -1081,35 +1117,100 @@ export const requestFinalPayment = async (req, res) => {
       });
     }
 
+    // Calculate shipping based on weight (Rs 350 per kg)
+    const weight = weightInKg || 1; // Default to 1kg if not specified
+    const shippingCost = Math.ceil(weight) * 350;
+
+    // Update order with weight and shipping
+    order.orderWeight = weight * 1000; // Store in grams
+    order.shippingCost = shippingCost;
+
+    // Final payment = remaining 50% + shipping (paid via COD)
+    const remainingProductCost = order.subtotal - order.advancePayment.amount;
+    order.finalPayment.amount = remainingProductCost + shippingCost;
+    order.finalPayment.method = 'cod';
+    order.finalPayment.status = 'cod_pending';
+
+    // Update total to include shipping
+    order.total = order.subtotal + shippingCost - order.discount;
+
     order.paymentStatus = 'pending_final';
     order.status = 'processing';
 
     order.statusHistory.push({
       status: 'processing',
-      note: 'Order ready - Final payment requested',
+      note: `Order ready for shipping - Weight: ${weight}kg, Shipping: Rs ${shippingCost}, COD Amount: Rs ${order.finalPayment.amount}`,
       updatedBy: req.user._id
     });
 
     await order.save();
 
-    // Send notification to customer
+    // Send notification to customer about COD
     if (order.shippingAddress?.email || order.user?.email) {
       sendEmail({
         to: order.shippingAddress.email || order.user.email,
-        subject: 'Your Order is Ready - Final Payment Required',
-        html: `<p>Great news! Your order #${order.orderNumber} is ready.</p>
-               <p>Please submit the remaining payment of Rs. ${order.finalPayment.amount.toLocaleString()} to receive your order.</p>
-               <p><strong>Payment Accounts:</strong></p>
+        subject: 'Your Order is Ready for Shipping!',
+        html: `<p>Great news! Your order #${order.orderNumber} is ready and will be shipped soon.</p>
+               <p><strong>Payment Details:</strong></p>
                <ul>
-                 <li>EasyPaisa/JazzCash: 03451504434</li>
-                 <li>HBL Bank: 16817905812303 (Quratulain Syed)</li>
-               </ul>`
+                 <li>Advance Paid: Rs. ${order.advancePayment.amount.toLocaleString()}</li>
+                 <li>Shipping (${weight}kg): Rs. ${shippingCost.toLocaleString()}</li>
+                 <li><strong>COD Amount: Rs. ${order.finalPayment.amount.toLocaleString()}</strong></li>
+               </ul>
+               <p>Please keep the COD amount ready for the delivery person.</p>`
       });
     }
 
     res.json({
       success: true,
-      message: 'Final payment request sent to customer',
+      message: 'Order ready for shipping with COD',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Mark COD as collected
+// @route   PUT /api/admin/orders/:id/cod-collected
+// @access  Admin
+export const markCodCollected = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.finalPayment.method !== 'cod') {
+      return res.status(400).json({
+        success: false,
+        message: 'This order is not COD'
+      });
+    }
+
+    order.finalPayment.status = 'cod_collected';
+    order.finalPayment.reviewedAt = new Date();
+    order.finalPayment.reviewedBy = req.user._id;
+    order.paymentStatus = 'fully_paid';
+
+    order.statusHistory.push({
+      status: order.status,
+      note: `COD collected: Rs ${order.finalPayment.amount}`,
+      updatedBy: req.user._id
+    });
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'COD payment marked as collected',
       data: order
     });
   } catch (error) {

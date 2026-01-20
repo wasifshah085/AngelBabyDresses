@@ -153,6 +153,8 @@
     "free": "Free",
     "total": "Total",
     "calculatedAtCheckout": "Calculated at checkout",
+    "shippingInfo": "Calculated after dispatch (Rs 350/kg)",
+    "shippingTitle": "Shipping",
     "proceedToCheckout": "Proceed to Checkout"
   },
   "wishlist": {
@@ -296,7 +298,9 @@
     "fabricPreference": "Fabric Preference",
     "notesPlaceholder": "Any additional details or special requests",
     "submitRequest": "Submit Design Request",
-    "quoteNote": "You will receive a quote and estimated delivery time within 2-3 business days."
+    "quoteNote": "You will receive a quote and estimated delivery time within 2-3 business days.",
+    "whatsappNumber": "WhatsApp Number",
+    "whatsappNote": "Our designer will contact you on WhatsApp to discuss your design"
   },
   "account": {
     "myAccount": "My Account",

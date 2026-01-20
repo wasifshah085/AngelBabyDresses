@@ -16,8 +16,8 @@ RUN npm install --omit=dev
 # Copy server source code
 COPY server/ .
 
-# Create uploads directory
-RUN mkdir -p uploads/products uploads/categories uploads/designs uploads/reviews
+# Create uploads directory with all required subdirectories
+RUN mkdir -p uploads/products uploads/categories uploads/designs uploads/reviews uploads/settings uploads/payments
 
 # Set environment
 ENV NODE_ENV=production

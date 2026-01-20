@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getDashboardStats,
   getProducts,
+  getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -17,6 +18,7 @@ import {
   approveFinalPayment,
   rejectFinalPayment,
   requestFinalPayment,
+  markCodCollected,
   getCustomDesigns,
   updateCustomDesign,
   addDesignMessage,
@@ -51,6 +53,7 @@ router.get('/dashboard', getDashboardStats);
 
 // Products
 router.get('/products', getProducts);
+router.get('/products/:id', getProductById);
 router.post('/products', uploadImages.array('images', 10), createProduct);
 router.put('/products/:id', uploadImages.array('images', 10), updateProduct);
 router.delete('/products/:id', deleteProduct);
@@ -70,6 +73,7 @@ router.put('/orders/:id/reject-advance', rejectAdvancePayment);
 router.put('/orders/:id/approve-final', approveFinalPayment);
 router.put('/orders/:id/reject-final', rejectFinalPayment);
 router.put('/orders/:id/request-final-payment', requestFinalPayment);
+router.put('/orders/:id/cod-collected', markCodCollected);
 
 // Custom Designs
 router.get('/custom-designs', getCustomDesigns);

@@ -40,7 +40,7 @@ const ProductForm = () => {
 
   const { data: productData, isLoading: loadingProduct } = useQuery({
     queryKey: ['admin-product', id],
-    queryFn: () => managementAPI.getProducts({ id }),
+    queryFn: () => managementAPI.getProduct(id),
     enabled: isEdit
   });
 
@@ -174,6 +174,16 @@ const ProductForm = () => {
 
     setLoading(true);
 
+    // Get new image files (from dropzone)
+    const newImageFiles = images.filter(img => img.file).map(img => img.file);
+    // Get existing image URLs (when editing)
+    const existingImageUrls = images.filter(img => img.existing).map(img => img.url);
+
+    // Debug: log what we're sending
+    console.log('Images state:', images);
+    console.log('New image files:', newImageFiles);
+    console.log('Existing image URLs:', existingImageUrls);
+
     const productData = {
       name: { en: data.nameEn, ur: data.nameUr || data.nameEn },
       description: { en: data.descriptionEn, ur: data.descriptionUr || data.descriptionEn },
@@ -189,8 +199,8 @@ const ProductForm = () => {
       colors: colors.filter(c => c.name),
       featured: data.featured || false,
       isActive: data.isActive ?? true,
-      images: images.filter(img => img.file).map(img => img.file),
-      existingImages: images.filter(img => img.existing).map(img => img.url)
+      images: newImageFiles,
+      existingImages: existingImageUrls
     };
 
     if (isEdit) {

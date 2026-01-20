@@ -8,7 +8,7 @@ import Coupon from '../models/Coupon.js';
 export const getCart = async (req, res) => {
   try {
     let cart = await Cart.findOne({ user: req.user._id })
-      .populate('items.product', 'name slug images price salePrice stock agePricing');
+      .populate('items.product', 'name slug images price salePrice stock agePricing weight');
 
     if (!cart) {
       cart = await Cart.create({ user: req.user._id, items: [] });
@@ -88,7 +88,7 @@ export const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    await cart.populate('items.product', 'name slug images price salePrice stock agePricing');
+    await cart.populate('items.product', 'name slug images price salePrice stock agePricing weight');
 
     res.json({
       success: true,
@@ -129,7 +129,7 @@ export const updateCartItem = async (req, res) => {
     // Made-to-order model: no stock validation needed
     item.quantity = quantity;
     await cart.save();
-    await cart.populate('items.product', 'name slug images price salePrice stock agePricing');
+    await cart.populate('items.product', 'name slug images price salePrice stock agePricing weight');
 
     res.json({
       success: true,
@@ -159,7 +159,7 @@ export const removeFromCart = async (req, res) => {
 
     cart.items.pull(req.params.itemId);
     await cart.save();
-    await cart.populate('items.product', 'name slug images price salePrice stock agePricing');
+    await cart.populate('items.product', 'name slug images price salePrice stock agePricing weight');
 
     res.json({
       success: true,
@@ -273,7 +273,7 @@ export const applyCoupon = async (req, res) => {
     cart.couponCode = coupon.code;
     cart.discount = discount;
     await cart.save();
-    await cart.populate('items.product', 'name slug images price salePrice stock agePricing');
+    await cart.populate('items.product', 'name slug images price salePrice stock agePricing weight');
 
     res.json({
       success: true,
@@ -298,7 +298,7 @@ export const removeCoupon = async (req, res) => {
       cart.couponCode = undefined;
       cart.discount = 0;
       await cart.save();
-      await cart.populate('items.product', 'name slug images price salePrice stock agePricing');
+      await cart.populate('items.product', 'name slug images price salePrice stock agePricing weight');
     }
 
     res.json({
