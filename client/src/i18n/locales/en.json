@@ -195,7 +195,27 @@
     "placeOrder": "Place Order",
     "freeShippingApplied": "Free shipping has been applied to your order!",
     "orderNotes": "Order Notes (Optional)",
-    "orderNotesPlaceholder": "Any special instructions for delivery..."
+    "orderNotesPlaceholder": "Any special instructions for delivery...",
+    "madeToOrderNotice": "Made-to-Order Payment",
+    "advancePaymentInfo": "We require 50% advance payment when placing order. The remaining 50% is due when your order is ready for delivery.",
+    "uploadPaymentProof": "Upload Payment Screenshot",
+    "uploadInstructions": "Please make the advance payment of Rs. {{advanceAmount}} to the account above, then upload the screenshot.",
+    "screenshotUploaded": "Screenshot uploaded",
+    "clickToUpload": "Click to upload screenshot",
+    "imageFormats": "PNG, JPG up to 5MB",
+    "paymentScreenshot": "Payment Screenshot",
+    "paymentBreakdown": "Payment Breakdown",
+    "advancePayment": "Advance (50%)",
+    "finalPayment": "On Completion (50%)",
+    "howPaymentWorks": "How Payment Works",
+    "acceptQuoteAndPayAdvance": "Accept Quote & Pay 50% Advance",
+    "acceptQuoteDescription": "Pay 50% of the quoted price via JazzCash, Easypaisa, or Bank Transfer to confirm your order.",
+    "adminVerifiesPayment": "Admin Verifies Payment",
+    "adminVerifiesPaymentDescription": "Our team will verify your payment screenshot and confirm your order within 24 hours.",
+    "productionBegins": "Production Begins",
+    "productionBeginsDescription": "Once payment is verified, we start making your custom design with care and attention.",
+    "payRemainingAndShipping": "Pay Remaining 50% + Shipping (COD)",
+    "payRemainingDescription": "Pay the remaining amount plus shipping (Rs 350/kg) when you receive your order via Cash on Delivery."
   },
   "order": {
     "orderConfirmed": "Order Confirmed!",
@@ -257,7 +277,9 @@
       "out_for_delivery": "Out for Delivery",
       "delivered": "Delivered",
       "cancelled": "Cancelled"
-    }
+    },
+    "awaitingVerification": "Payment Verification Pending",
+    "awaitingVerificationDesc": "Your payment is being verified. This usually takes a few hours. You will be notified once verified."
   },
   "customDesign": {
     "title": "Create Your Custom Design",
@@ -276,17 +298,23 @@
     "whatsapp": "WhatsApp",
     "submitDesign": "Submit Design Request",
     "myDesigns": "My Custom Designs",
-    "designStatus": {
+    "status": {
       "pending": "Pending Review",
       "reviewing": "Under Review",
       "quoted": "Quote Ready",
       "accepted": "Accepted",
+      "in_production": "In Production",
       "inProduction": "In Production",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "awaitingVerification": "Awaiting Verification",
+      "in_progress": "In Progress"
     },
     "quotedPrice": "Quoted Price",
+    "awaitingVerificationDesc": "Your design is awaiting verification by our team.",
     "estimatedDays": "Estimated Days",
+    "estimatedDaysValue": "Estimated: {{days}} days",
+    "days": "days",
     "acceptQuote": "Accept Quote",
     "viewConversation": "View Conversation",
     "uploadDesignDesc": "Upload images of your design idea (Max 5 images)",
@@ -357,8 +385,8 @@
     "returns": "Returns & Exchanges",
     "sizeGuide": "Size Guide",
     "followUs": "Follow Us",
-    "copyright": "© 2024 Angel Baby Dresses. All rights reserved.",
-    "madeWithLove": "Made with love in Pakistan"
+    "copyright": "© 2026 Angel Baby Dresses. All rights reserved.",
+    "madeWithLove": "Made by Wasif Shah"
   },
   "validation": {
     "required": "This field is required",

@@ -256,9 +256,11 @@ export const managementAPI = {
   approveFinalPayment: (id) => api.put(`/admin/orders/${id}/approve-final`),
   rejectFinalPayment: (id, reason) => api.put(`/admin/orders/${id}/reject-final`, { reason }),
   requestFinalPayment: (id) => api.put(`/admin/orders/${id}/request-final-payment`),
+  setOrderShipping: (id, weightInKg) => api.put(`/admin/orders/${id}/set-shipping`, { weightInKg }),
 
   // Custom Designs
   getCustomDesigns: (params) => api.get('/admin/custom-designs', { params }),
+  getCustomDesign: (id) => api.get(`/admin/custom-designs/${id}`),
   updateCustomDesign: (id, data) => api.put(`/admin/custom-designs/${id}`, data),
   addDesignMessage: (id, data) => {
     const formData = new FormData();
@@ -278,6 +280,7 @@ export const managementAPI = {
   createSale: (data) => api.post('/admin/sales', data),
   updateSale: (id, data) => api.put(`/admin/sales/${id}`, data),
   deleteSale: (id) => api.delete(`/admin/sales/${id}`),
+  sendSalePromotion: (id) => api.post(`/admin/sales/${id}/send-promotion`),
 
   // Coupons
   getCoupons: () => api.get('/admin/coupons'),

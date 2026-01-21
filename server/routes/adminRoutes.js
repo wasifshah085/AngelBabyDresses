@@ -18,8 +18,10 @@ import {
   approveFinalPayment,
   rejectFinalPayment,
   requestFinalPayment,
+  setOrderShipping,
   markCodCollected,
   getCustomDesigns,
+  getCustomDesignById,
   updateCustomDesign,
   addDesignMessage,
   getCustomers,
@@ -28,6 +30,7 @@ import {
   createSale,
   updateSale,
   deleteSale,
+  sendSalePromotion,
   getCoupons,
   createCoupon,
   updateCoupon,
@@ -73,10 +76,12 @@ router.put('/orders/:id/reject-advance', rejectAdvancePayment);
 router.put('/orders/:id/approve-final', approveFinalPayment);
 router.put('/orders/:id/reject-final', rejectFinalPayment);
 router.put('/orders/:id/request-final-payment', requestFinalPayment);
+router.put('/orders/:id/set-shipping', setOrderShipping);
 router.put('/orders/:id/cod-collected', markCodCollected);
 
 // Custom Designs
 router.get('/custom-designs', getCustomDesigns);
+router.get('/custom-designs/:id', getCustomDesignById);
 router.put('/custom-designs/:id', updateCustomDesign);
 router.post('/custom-designs/:id/message', uploadDesignFile.array('attachments', 3), addDesignMessage);
 
@@ -89,6 +94,7 @@ router.get('/sales', getSales);
 router.post('/sales', createSale);
 router.put('/sales/:id', updateSale);
 router.delete('/sales/:id', deleteSale);
+router.post('/sales/:id/send-promotion', sendSalePromotion);
 
 // Coupons
 router.get('/coupons', getCoupons);

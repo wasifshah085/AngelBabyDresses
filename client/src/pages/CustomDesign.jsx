@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { useDropzone } from 'react-dropzone';
-import { FiUpload, FiX, FiImage } from 'react-icons/fi';
+import { FiUpload, FiX, FiImage, FiSend, FiDollarSign, FiCheckCircle, FiTruck } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { customDesignAPI } from '../services/api';
@@ -93,6 +93,49 @@ const CustomDesign = () => {
           <p className="text-gray-600 max-w-2xl mx-auto">
             {t('customDesign.subtitle')}
           </p>
+        </div>
+
+        {/* How It Works */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <h2 className="text-xl font-heading font-semibold text-center text-gray-900 mb-6">
+            How Custom Orders Work
+          </h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiSend className="w-7 h-7 text-primary-600" />
+              </div>
+              <h3 className="font-medium text-gray-900 mb-2">1. Submit Design</h3>
+              <p className="text-sm text-gray-600">Upload your design idea and tell us what you want</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiDollarSign className="w-7 h-7 text-primary-600" />
+              </div>
+              <h3 className="font-medium text-gray-900 mb-2">2. Get Quote</h3>
+              <p className="text-sm text-gray-600">We review and send you a price quote within 24-48 hours</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiCheckCircle className="w-7 h-7 text-primary-600" />
+              </div>
+              <h3 className="font-medium text-gray-900 mb-2">3. Pay 50% Advance</h3>
+              <p className="text-sm text-gray-600">Confirm order by paying 50% via JazzCash/Easypaisa/Bank</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiTruck className="w-7 h-7 text-primary-600" />
+              </div>
+              <h3 className="font-medium text-gray-900 mb-2">4. Pay Remaining COD</h3>
+              <p className="text-sm text-gray-600">Pay remaining 50% + shipping (Rs 350/kg) on delivery</p>
+            </div>
+          </div>
+
+          <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <p className="text-sm text-yellow-800 text-center">
+              <strong>Important:</strong> Your order will only start production after your advance payment is verified. Orders without advance payment will not proceed.
+            </p>
+          </div>
         </div>
 
         {/* Design Form */}

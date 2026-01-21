@@ -255,7 +255,9 @@
       "out_for_delivery": "ڈیلیوری کے لیے روانہ",
       "delivered": "پہنچ گیا",
       "cancelled": "منسوخ"
-    }
+    },
+    "awaitingVerification": "ادائیگی کی تصدیق زیر التواء",
+    "awaitingVerificationDesc": "آپ کی ادائیگی کی تصدیق ہو رہی ہے۔ عام طور پر چند گھنٹے لگتے ہیں۔ تصدیق ہونے پر آپ کو مطلع کیا جائے گا۔"
   },
   "customDesign": {
     "title": "اپنا کسٹم ڈیزائن بنائیں",
@@ -274,17 +276,23 @@
     "whatsapp": "واٹس ایپ",
     "submitDesign": "ڈیزائن کی درخواست جمع کرائیں",
     "myDesigns": "میرے کسٹم ڈیزائن",
-    "designStatus": {
+    "status": {
       "pending": "جائزے کا انتظار",
       "reviewing": "جائزے میں",
       "quoted": "قیمت تیار",
       "accepted": "قبول",
+      "in_production": "پیداوار میں",
       "inProduction": "پیداوار میں",
       "completed": "مکمل",
-      "cancelled": "منسوخ"
+      "cancelled": "منسوخ",
+      "awaitingVerification": "تصدیق کا انتظار",
+      "in_progress": "جاری"
     },
+    "awaitingVerificationDesc": "آپ کا ڈیزائن ہماری ٹیم کی تصدیق کا انتظار کر رہا ہے۔",
     "quotedPrice": "اندازہ قیمت",
     "estimatedDays": "اندازہ دن",
+    "estimatedDaysValue": "اندازہ: {{days}} دن",
+    "days": "دن",
     "acceptQuote": "قیمت قبول کریں",
     "viewConversation": "گفتگو دیکھیں",
     "uploadDesignDesc": "اپنے ڈیزائن آئیڈیا کی تصاویر اپلوڈ کریں (زیادہ سے زیادہ 5)",
@@ -353,8 +361,8 @@
     "returns": "واپسی اور تبادلہ",
     "sizeGuide": "سائز گائیڈ",
     "followUs": "ہمیں فالو کریں",
-    "copyright": "© 2024 اینجل بیبی ڈریسز۔ جملہ حقوق محفوظ ہیں۔",
-    "madeWithLove": "پاکستان میں محبت سے بنایا گیا"
+    "copyright": "© 2026 اینجل بیبی ڈریسز۔ جملہ حقوق محفوظ ہیں۔",
+    "madeWithLove": "وصیف شاہ نے بنایا"
   },
   "validation": {
     "required": "یہ فیلڈ ضروری ہے",

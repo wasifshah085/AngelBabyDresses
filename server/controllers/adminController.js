@@ -790,7 +790,8 @@ export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email phone')
-      .populate('items.product', 'name images');
+      .populate('items.product', 'name images')
+      .populate('customDesign', 'uploadedImages designNumber description');
 
     if (!order) {
       return res.status(404).json({
@@ -816,7 +817,7 @@ export const getOrderById = async (req, res) => {
 // @access  Admin
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { status, trackingNumber, trackingUrl, adminNotes } = req.body;
+    const { status, trackingNumber, trackingUrl, shippingCarrier, adminNotes } = req.body;
 
     const order = await Order.findById(req.params.id).populate('user');
 
@@ -827,44 +828,90 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    const previousStatus = order.status;
     order.status = status;
     if (trackingNumber) order.trackingNumber = trackingNumber;
     if (trackingUrl) order.trackingUrl = trackingUrl;
+    if (shippingCarrier) order.shippingCarrier = shippingCarrier;
     if (adminNotes) order.adminNotes = adminNotes;
 
     if (status === 'delivered') {
       order.deliveredAt = new Date();
+      // Mark COD as collected if it's a COD order
+      if (order.finalPayment?.method === 'cod' && order.finalPayment?.status === 'cod_pending') {
+        order.finalPayment.status = 'cod_collected';
+        order.paymentStatus = 'fully_paid';
+      }
     }
 
     order.statusHistory.push({
       status,
-      note: adminNotes,
+      note: adminNotes || `Status changed from ${previousStatus} to ${status}`,
       updatedBy: req.user._id
     });
 
     await order.save();
 
-    // Send notifications based on status
+    // Send email notification for all status changes
+    const customerEmail = order.shippingAddress?.email || order.user?.email;
     const lang = order.user?.preferredLanguage || 'en';
 
-    if (status === 'shipped') {
-      const { subject, html } = emailTemplates.orderShipped(order, lang);
-      sendEmail({
-        to: order.shippingAddress.email || order.user?.email,
-        subject,
-        html
-      });
+    if (customerEmail) {
+      try {
+        // Send status update email
+        const { subject, html } = emailTemplates.orderStatusUpdate(order, status, {
+          lang,
+          adminNotes,
+          courierService: shippingCarrier
+        });
+        await sendEmail({
+          to: customerEmail,
+          subject,
+          html
+        });
+        console.log(`Status update email sent to ${customerEmail} for order ${order.orderNumber}`);
 
-      if (order.shippingAddress.phone) {
-        const message = whatsappMessages.orderShipped(order, lang);
-        sendWhatsAppMessage(order.shippingAddress.phone, message);
+        // Send thank you email when order is delivered
+        if (status === 'delivered') {
+          const thankYouEmail = emailTemplates.orderCompleted(order, lang);
+          await sendEmail({
+            to: customerEmail,
+            subject: thankYouEmail.subject,
+            html: thankYouEmail.html
+          });
+          console.log(`Thank you email sent to ${customerEmail} for order ${order.orderNumber}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send status update email:', emailError.message);
       }
     }
 
-    if (status === 'delivered') {
-      if (order.shippingAddress.phone) {
-        const message = whatsappMessages.orderDelivered(order, lang);
+    // Send WhatsApp notification
+    if (order.shippingAddress?.phone) {
+      try {
+        let message;
+        switch (status) {
+          case 'confirmed':
+            message = `✅ *Payment Approved!*\n\nYour order #${order.orderNumber} is confirmed and will start production soon.\n\nThank you for shopping with Angel Baby Dresses! 🎀`;
+            break;
+          case 'processing':
+            message = `🧵 *Order Update*\n\nYour order #${order.orderNumber} is being made by our skilled artisans.\n\nWe'll notify you when it's ready for shipping! 🎀`;
+            break;
+          case 'shipped':
+            message = `📦 *Order Shipped!*\n\nYour order #${order.orderNumber} is on its way!\n\n${trackingNumber ? `📍 Tracking: ${trackingNumber}` : ''}${shippingCarrier ? `\n🚚 Courier: ${shippingCarrier}` : ''}\n\n💵 COD Amount: Rs. ${order.finalPayment?.amount || 0}\n\nAngel Baby Dresses 🎀`;
+            break;
+          case 'out_for_delivery':
+            message = `🚚 *Out for Delivery!*\n\nYour order #${order.orderNumber} will reach you today!\n\n💵 Please keep COD amount ready: Rs. ${order.finalPayment?.amount || 0}\n\nAngel Baby Dresses 🎀`;
+            break;
+          case 'delivered':
+            message = `🎉 *Order Delivered!*\n\nYour order #${order.orderNumber} has been delivered!\n\nThank you for shopping with Angel Baby Dresses! We hope you love your purchase! 🎀\n\nPlease leave us a review! ⭐`;
+            break;
+          default:
+            message = `📋 *Order Update*\n\nYour order #${order.orderNumber} status: ${status.replace(/_/g, ' ').toUpperCase()}\n\nAngel Baby Dresses 🎀`;
+        }
         sendWhatsAppMessage(order.shippingAddress.phone, message);
+      } catch (whatsappError) {
+        console.error('Failed to send WhatsApp notification:', whatsappError.message);
       }
     }
 
@@ -874,6 +921,7 @@ export const updateOrderStatus = async (req, res) => {
       data: order
     });
   } catch (error) {
+    console.error('Update order status error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -917,13 +965,24 @@ export const approveAdvancePayment = async (req, res) => {
     await order.save();
 
     // Send notification to customer
-    const lang = order.user?.preferredLanguage || 'en';
-    if (order.shippingAddress?.email || order.user?.email) {
-      sendEmail({
-        to: order.shippingAddress.email || order.user.email,
-        subject: 'Payment Approved - Order Confirmed',
-        html: `<p>Your advance payment has been approved. Your order #${order.orderNumber} is now confirmed and will be processed.</p>`
-      });
+    const customerEmail = order.shippingAddress?.email || order.user?.email;
+    if (customerEmail) {
+      try {
+        const { subject, html } = emailTemplates.paymentApproved(order, 'advance');
+        await sendEmail({ to: customerEmail, subject, html });
+      } catch (emailError) {
+        console.error('Failed to send payment approved email:', emailError.message);
+      }
+    }
+
+    // Send WhatsApp notification
+    if (order.shippingAddress?.phone) {
+      try {
+        const message = `✅ *Payment Approved!*\n\nYour advance payment of Rs. ${order.advancePayment.amount} for order #${order.orderNumber} has been verified.\n\nYour order is now confirmed and will start production soon!\n\n🎀 Angel Baby Dresses`;
+        sendWhatsAppMessage(order.shippingAddress.phone, message);
+      } catch (e) {
+        console.error('WhatsApp error:', e.message);
+      }
     }
 
     res.json({
@@ -971,12 +1030,24 @@ export const rejectAdvancePayment = async (req, res) => {
     await order.save();
 
     // Send notification to customer
-    if (order.shippingAddress?.email || order.user?.email) {
-      sendEmail({
-        to: order.shippingAddress.email || order.user.email,
-        subject: 'Payment Rejected - Please Resubmit',
-        html: `<p>Your advance payment for order #${order.orderNumber} was rejected.</p><p>Reason: ${reason || 'Payment could not be verified'}</p><p>Please submit a new payment screenshot.</p>`
-      });
+    const customerEmail = order.shippingAddress?.email || order.user?.email;
+    if (customerEmail) {
+      try {
+        const { subject, html } = emailTemplates.paymentRejected(order, reason, 'advance');
+        await sendEmail({ to: customerEmail, subject, html });
+      } catch (emailError) {
+        console.error('Failed to send payment rejected email:', emailError.message);
+      }
+    }
+
+    // Send WhatsApp notification
+    if (order.shippingAddress?.phone) {
+      try {
+        const message = `❌ *Payment Rejected*\n\nYour advance payment for order #${order.orderNumber} was not verified.\n\nReason: ${reason || 'Payment could not be verified'}\n\nPlease submit a new payment screenshot.\n\n💳 Accounts:\nJazzCash/Easypaisa: 03341542572\nHBL: 16817905812303\nName: Quratulain Syed\n\n🎀 Angel Baby Dresses`;
+        sendWhatsAppMessage(order.shippingAddress.phone, message);
+      } catch (e) {
+        console.error('WhatsApp error:', e.message);
+      }
     }
 
     res.json({
@@ -1021,12 +1092,24 @@ export const approveFinalPayment = async (req, res) => {
     await order.save();
 
     // Send notification to customer
-    if (order.shippingAddress?.email || order.user?.email) {
-      sendEmail({
-        to: order.shippingAddress.email || order.user.email,
-        subject: 'Final Payment Approved - Order Complete',
-        html: `<p>Your final payment has been approved. Your order #${order.orderNumber} is now fully paid and will be shipped soon.</p>`
-      });
+    const customerEmail = order.shippingAddress?.email || order.user?.email;
+    if (customerEmail) {
+      try {
+        const { subject, html } = emailTemplates.paymentApproved(order, 'final');
+        await sendEmail({ to: customerEmail, subject, html });
+      } catch (emailError) {
+        console.error('Failed to send final payment approved email:', emailError.message);
+      }
+    }
+
+    // Send WhatsApp notification
+    if (order.shippingAddress?.phone) {
+      try {
+        const message = `✅ *Final Payment Approved!*\n\nYour order #${order.orderNumber} is now fully paid!\n\nThank you for your purchase! 🎀\n\nAngel Baby Dresses`;
+        sendWhatsAppMessage(order.shippingAddress.phone, message);
+      } catch (e) {
+        console.error('WhatsApp error:', e.message);
+      }
     }
 
     res.json({
@@ -1074,12 +1157,24 @@ export const rejectFinalPayment = async (req, res) => {
     await order.save();
 
     // Send notification to customer
-    if (order.shippingAddress?.email || order.user?.email) {
-      sendEmail({
-        to: order.shippingAddress.email || order.user.email,
-        subject: 'Final Payment Rejected - Please Resubmit',
-        html: `<p>Your final payment for order #${order.orderNumber} was rejected.</p><p>Reason: ${reason || 'Payment could not be verified'}</p><p>Please submit a new payment screenshot.</p>`
-      });
+    const customerEmail = order.shippingAddress?.email || order.user?.email;
+    if (customerEmail) {
+      try {
+        const { subject, html } = emailTemplates.paymentRejected(order, reason, 'final');
+        await sendEmail({ to: customerEmail, subject, html });
+      } catch (emailError) {
+        console.error('Failed to send final payment rejected email:', emailError.message);
+      }
+    }
+
+    // Send WhatsApp notification
+    if (order.shippingAddress?.phone) {
+      try {
+        const message = `❌ *Final Payment Rejected*\n\nYour final payment for order #${order.orderNumber} was not verified.\n\nReason: ${reason || 'Payment could not be verified'}\n\nPlease submit a new payment screenshot.\n\n🎀 Angel Baby Dresses`;
+        sendWhatsAppMessage(order.shippingAddress.phone, message);
+      } catch (e) {
+        console.error('WhatsApp error:', e.message);
+      }
     }
 
     res.json({
@@ -1174,6 +1269,95 @@ export const requestFinalPayment = async (req, res) => {
   }
 };
 
+// @desc    Set order shipping charges
+// @route   PUT /api/admin/orders/:id/set-shipping
+// @access  Admin
+export const setOrderShipping = async (req, res) => {
+  try {
+    const { weightInKg } = req.body;
+    const order = await Order.findById(req.params.id).populate('user');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.advancePayment.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Advance payment must be approved first'
+      });
+    }
+
+    // Calculate shipping based on weight (Rs 350 per kg)
+    const weight = weightInKg || 1; // Default to 1kg if not specified
+    const shippingCost = Math.ceil(weight) * 350;
+
+    // Update order with weight and shipping
+    order.orderWeight = weight * 1000; // Store in grams
+    order.shippingCost = shippingCost;
+
+    // Final payment = remaining 50% + shipping (paid via COD)
+    const remainingProductCost = order.subtotal - order.advancePayment.amount;
+    order.finalPayment.amount = remainingProductCost + shippingCost;
+    order.finalPayment.method = 'cod';
+    order.finalPayment.status = 'cod_pending';
+
+    // Update total to include shipping
+    order.total = order.subtotal + shippingCost - order.discount;
+
+    order.paymentStatus = 'pending_final';
+
+    order.statusHistory.push({
+      status: order.status,
+      note: `Shipping charges set - Weight: ${weight}kg, Shipping: Rs ${shippingCost}, COD Amount: Rs ${order.finalPayment.amount}`,
+      updatedBy: req.user._id
+    });
+
+    await order.save();
+
+    // Send shipping notification email to customer
+    const customerEmail = order.shippingAddress?.email || order.user?.email;
+    if (customerEmail) {
+      try {
+        const { subject, html } = emailTemplates.shippingChargesSet(order, {
+          weightKg: weight,
+          shippingCost,
+          remainingProductCost,
+          codAmount: order.finalPayment.amount
+        });
+        await sendEmail({ to: customerEmail, subject, html });
+        console.log(`Shipping notification email sent to ${customerEmail} for order ${order.orderNumber}`);
+      } catch (emailError) {
+        console.error('Failed to send shipping notification email:', emailError.message);
+      }
+    }
+
+    // Send WhatsApp notification
+    if (order.shippingAddress?.phone) {
+      try {
+        const message = `📦 *Shipping Update!*\n\nYour order #${order.orderNumber} has been weighed and is ready for shipping!\n\n⚖️ Package Weight: ${weight}kg\n🚚 Shipping Cost: Rs ${shippingCost.toLocaleString()}\n\n💵 *Total COD Amount: Rs ${order.finalPayment.amount.toLocaleString()}*\n\nPlease keep this amount ready for the delivery person.\n\n🎀 Angel Baby Dresses`;
+        sendWhatsAppMessage(order.shippingAddress.phone, message);
+      } catch (e) {
+        console.error('WhatsApp error:', e.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Shipping charges set and customer notified',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Mark COD as collected
 // @route   PUT /api/admin/orders/:id/cod-collected
 // @access  Admin
@@ -1245,6 +1429,34 @@ export const getCustomDesigns = async (req, res) => {
       success: true,
       data: designs,
       pagination: getPaginationInfo(total, page, limit)
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get single custom design by ID
+// @route   GET /api/admin/custom-designs/:id
+// @access  Admin
+export const getCustomDesignById = async (req, res) => {
+  try {
+    const design = await CustomDesign.findById(req.params.id)
+      .populate('user', 'name email phone')
+      .populate('order');
+
+    if (!design) {
+      return res.status(404).json({
+        success: false,
+        message: 'Custom design not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: design
     });
   } catch (error) {
     res.status(500).json({
@@ -1477,11 +1689,70 @@ export const getSales = async (req, res) => {
 // @access  Admin
 export const createSale = async (req, res) => {
   try {
-    const sale = await Sale.create(req.body);
+    const { sendPromotionalEmails, ...saleData } = req.body;
+    const sale = await Sale.create(saleData);
+
+    // Send promotional emails if requested
+    if (sendPromotionalEmails) {
+      try {
+        // Get products for the sale
+        let products = [];
+        if (sale.applicableTo === 'products' && sale.products?.length > 0) {
+          products = await Product.find({ _id: { $in: sale.products } }).limit(6);
+        } else if (sale.applicableTo === 'categories' && sale.categories?.length > 0) {
+          products = await Product.find({ category: { $in: sale.categories } }).limit(6);
+        } else {
+          // Get some featured/popular products for 'all' sales
+          products = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(6);
+        }
+
+        // Get all users with emails
+        const users = await User.find({ email: { $exists: true, $ne: '' } }).select('email name preferredLanguage');
+
+        // Send emails in batches to avoid overwhelming the email server
+        const batchSize = 10;
+        let emailsSent = 0;
+
+        const saleForEmail = {
+          ...sale.toObject(),
+          name: sale.name?.en || sale.name,
+          discountPercentage: sale.type === 'percentage' ? sale.discountValue : Math.round((sale.discountValue / 1000) * 100) // Estimate for fixed
+        };
+
+        for (let i = 0; i < users.length; i += batchSize) {
+          const batch = users.slice(i, i + batchSize);
+
+          await Promise.all(batch.map(async (user) => {
+            try {
+              const lang = user.preferredLanguage || 'en';
+              const { subject, html } = emailTemplates.salePromotion(saleForEmail, products, lang);
+              await sendEmail({
+                to: user.email,
+                subject,
+                html
+              });
+              emailsSent++;
+            } catch (emailError) {
+              console.error(`Failed to send promo email to ${user.email}:`, emailError.message);
+            }
+          }));
+
+          // Small delay between batches
+          if (i + batchSize < users.length) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+
+        console.log(`Sale promotion emails sent to ${emailsSent} users`);
+      } catch (promoError) {
+        console.error('Error sending promotional emails:', promoError.message);
+        // Don't fail the sale creation if emails fail
+      }
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Sale created successfully',
+      message: sendPromotionalEmails ? 'Sale created and promotional emails sent!' : 'Sale created successfully',
       data: sale
     });
   } catch (error) {
@@ -1514,6 +1785,81 @@ export const updateSale = async (req, res) => {
       success: true,
       message: 'Sale updated successfully',
       data: sale
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Send promotional emails for a sale
+// @route   POST /api/admin/sales/:id/send-promotion
+// @access  Admin
+export const sendSalePromotion = async (req, res) => {
+  try {
+    const sale = await Sale.findById(req.params.id);
+
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sale not found'
+      });
+    }
+
+    // Get products for the sale
+    let products = [];
+    if (sale.applicableTo === 'products' && sale.products?.length > 0) {
+      products = await Product.find({ _id: { $in: sale.products } }).limit(6);
+    } else if (sale.applicableTo === 'categories' && sale.categories?.length > 0) {
+      products = await Product.find({ category: { $in: sale.categories } }).limit(6);
+    } else {
+      products = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(6);
+    }
+
+    // Get all users with emails
+    const users = await User.find({ email: { $exists: true, $ne: '' } }).select('email name preferredLanguage');
+
+    const saleForEmail = {
+      ...sale.toObject(),
+      name: sale.name?.en || sale.name,
+      discountPercentage: sale.type === 'percentage' ? sale.discountValue : Math.round((sale.discountValue / 1000) * 100)
+    };
+
+    // Send emails in batches
+    const batchSize = 10;
+    let emailsSent = 0;
+    let emailsFailed = 0;
+
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, i + batchSize);
+
+      await Promise.all(batch.map(async (user) => {
+        try {
+          const lang = user.preferredLanguage || 'en';
+          const { subject, html } = emailTemplates.salePromotion(saleForEmail, products, lang);
+          await sendEmail({
+            to: user.email,
+            subject,
+            html
+          });
+          emailsSent++;
+        } catch (emailError) {
+          console.error(`Failed to send promo email to ${user.email}:`, emailError.message);
+          emailsFailed++;
+        }
+      }));
+
+      if (i + batchSize < users.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Promotional emails sent! ${emailsSent} successful, ${emailsFailed} failed.`,
+      data: { emailsSent, emailsFailed, totalUsers: users.length }
     });
   } catch (error) {
     res.status(500).json({

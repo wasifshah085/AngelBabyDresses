@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiUser, FiMail, FiPhone, FiLock, FiMapPin, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiLock, FiMapPin, FiPlus, FiEdit2, FiTrash2, FiShoppingBag, FiPenTool } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/api';
 import { useAuthStore } from '../store/useStore';
@@ -199,6 +199,23 @@ const Account = () => {
                     {tab.label}
                   </button>
                 ))}
+
+                <div className="pt-4 mt-4 border-t">
+                  <Link
+                    to="/orders"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50"
+                  >
+                    <FiShoppingBag className="w-5 h-5" />
+                    {t('account.myOrders') || 'My Orders'}
+                  </Link>
+                  <Link
+                    to="/my-designs"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50"
+                  >
+                    <FiPenTool className="w-5 h-5" />
+                    {t('account.myDesigns') || 'My Custom Designs'}
+                  </Link>
+                </div>
               </nav>
 
               <button

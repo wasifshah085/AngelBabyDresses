@@ -28,10 +28,10 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', icon: FiFacebook, href: '#' },
-    { name: 'Instagram', icon: FiInstagram, href: '#' },
+    { name: 'Facebook', icon: FiFacebook, href: 'https://www.facebook.com/share/17kYD7ba11/' },
+    { name: 'Instagram', icon: FiInstagram, href: 'https://www.instagram.com/angelbabydresses_official?igsh=MWlnM3VidGJtaHMzeA==' },
     { name: 'TikTok', icon: FaTiktok, href: '#' },
-    { name: 'WhatsApp', icon: FaWhatsapp, href: '#' }
+    { name: 'WhatsApp', icon: FaWhatsapp, href: 'https://wa.me/923341542572' }
   ];
 
   return (
@@ -133,20 +133,20 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href={`tel:${settings?.contact?.phone || '+923001234567'}`} className="hover:text-primary-400 transition-colors">
-                  {settings?.contact?.phone || '+92 300 1234567'}
+                <a href={`tel:${settings?.contact?.phone || '+923341542572'}`} className="hover:text-primary-400 transition-colors">
+                  {settings?.contact?.phone || '+92 334 1542572'}
                 </a>
               </li>
               {(settings?.contact?.whatsapp || true) && (
                 <li>
                   <a
-                    href={`https://wa.me/${settings?.contact?.whatsapp || '923001234567'}`}
+                    href={`https://wa.me/${settings?.contact?.whatsapp || '923341542572'}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors"
                   >
                     <FaWhatsapp className="w-5 h-5" />
-                    WhatsApp
+                    WhatsApp: 0334-1542572
                   </a>
                 </li>
               )}

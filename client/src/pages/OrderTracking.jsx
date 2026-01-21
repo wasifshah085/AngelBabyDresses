@@ -297,7 +297,7 @@ const OrderTracking = () => {
                     {order.items?.map((item, index) => (
                       <div key={index} className="flex gap-3">
                         <img
-                          src={getImageUrl(item.product?.images?.[0]?.url || item.image)}
+                          src={getImageUrl(item.product?.images?.[0]?.url || item.image || order.customDesign?.uploadedImages?.[0]?.url)}
                           alt={item.name}
                           className="w-16 h-16 object-cover rounded"
                         />

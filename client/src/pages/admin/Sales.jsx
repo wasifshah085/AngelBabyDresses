@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiPercent, FiCalendar } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiPercent, FiCalendar, FiMail, FiSend } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
@@ -70,6 +70,16 @@ const Sales = () => {
     }
   });
 
+  const sendPromotionMutation = useMutation({
+    mutationFn: (id) => managementAPI.sendSalePromotion(id),
+    onSuccess: (data) => {
+      toast.success(data?.data?.message || 'Promotional emails sent!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
+    }
+  });
+
   const openModal = (sale = null) => {
     if (sale) {
       setEditingSale(sale);
@@ -102,13 +112,20 @@ const Sales = () => {
       discountValue: Number(data.discount),
       startDate: data.startDate,
       endDate: data.endDate,
-      isActive: data.isActive
+      isActive: data.isActive,
+      sendPromotionalEmails: !editingSale && data.sendPromotionalEmails
     };
 
     if (editingSale) {
       updateMutation.mutate({ id: editingSale._id, data: saleData });
     } else {
       createMutation.mutate(saleData);
+    }
+  };
+
+  const handleSendPromotion = (sale) => {
+    if (window.confirm('Send promotional emails to all customers for this sale?')) {
+      sendPromotionMutation.mutate(sale._id);
     }
   };
 
@@ -184,21 +201,31 @@ const Sales = () => {
                   </p>
                 )}
 
-                <div className="flex gap-2 mt-4">
+                <div className="flex flex-col gap-2 mt-4">
                   <button
-                    onClick={() => openModal(sale)}
-                    className="btn btn-outline btn-sm flex-1"
+                    onClick={() => handleSendPromotion(sale)}
+                    disabled={sendPromotionMutation.isPending}
+                    className="btn btn-primary btn-sm w-full"
                   >
-                    <FiEdit2 className="w-4 h-4 mr-1" />
-                    {t('common.edit')}
+                    <FiSend className="w-4 h-4 mr-1" />
+                    {sendPromotionMutation.isPending ? 'Sending...' : 'Send Promotion Emails'}
                   </button>
-                  <button
-                    onClick={() => handleDelete(sale)}
-                    disabled={deleteMutation.isPending}
-                    className="btn btn-outline btn-sm text-red-500 border-red-300 hover:bg-red-50"
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openModal(sale)}
+                      className="btn btn-outline btn-sm flex-1"
+                    >
+                      <FiEdit2 className="w-4 h-4 mr-1" />
+                      {t('common.edit')}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(sale)}
+                      disabled={deleteMutation.isPending}
+                      className="btn btn-outline btn-sm text-red-500 border-red-300 hover:bg-red-50"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -302,6 +329,25 @@ const Sales = () => {
                 />
                 <span className="font-medium text-gray-700">{t('admin.activeSale')}</span>
               </label>
+
+              {!editingSale && (
+                <label className="flex items-center gap-3 cursor-pointer bg-pink-50 p-3 rounded-lg border border-pink-200">
+                  <input
+                    type="checkbox"
+                    {...register('sendPromotionalEmails')}
+                    className="w-5 h-5 rounded text-primary-500"
+                  />
+                  <div>
+                    <span className="font-medium text-pink-700 flex items-center gap-2">
+                      <FiMail className="w-4 h-4" />
+                      Send Promotional Emails
+                    </span>
+                    <p className="text-xs text-pink-600 mt-1">
+                      Notify all customers about this sale via email
+                    </p>
+                  </div>
+                </label>
+              )}
 
               <div className="flex gap-4">
                 <button type="button" onClick={closeModal} className="btn btn-outline flex-1">

@@ -187,6 +187,23 @@ export const acceptQuote = async (req, res) => {
   try {
     const { shippingAddress, paymentMethod } = req.body;
 
+    // Validate shipping address
+    if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone ||
+        !shippingAddress.address || !shippingAddress.city || !shippingAddress.province) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide complete shipping address'
+      });
+    }
+
+    // Validate payment method
+    if (!paymentMethod || !['easypaisa', 'jazzcash', 'bank_transfer'].includes(paymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a valid payment method'
+      });
+    }
+
     const design = await CustomDesign.findOne({
       _id: req.params.id,
       user: req.user._id,
@@ -207,31 +224,57 @@ export const acceptQuote = async (req, res) => {
       });
     }
 
-    // Create custom order
+    // Create custom order with 50% advance payment system
     const Order = (await import('../models/Order.js')).default;
-    const Setting = (await import('../models/Setting.js')).default;
 
-    const settings = await Setting.getSettings();
-    const shippingCost = design.quotedPrice >= settings.shipping.freeShippingThreshold
-      ? 0
-      : settings.shipping.standardShippingRate;
+    const subtotal = design.quotedPrice * design.quantity;
+    // Advance payment is 50% of subtotal (shipping will be added to COD later)
+    const advanceAmount = Math.ceil(subtotal / 2);
+
+    // Generate order number manually
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const orderNumber = `ABD${year}${month}${random}`;
+
+    // Get the first image from the custom design
+    const designImage = design.uploadedImages?.[0]?.url || null;
 
     const order = await Order.create({
+      orderNumber,
       user: req.user._id,
       items: [{
-        product: null,
         name: `Custom Design - ${design.designNumber}`,
+        image: designImage,
         price: design.quotedPrice,
         quantity: design.quantity,
-        size: design.size
+        ageRange: design.size
       }],
-      subtotal: design.quotedPrice * design.quantity,
-      shippingCost,
-      total: (design.quotedPrice * design.quantity) + shippingCost,
+      subtotal: subtotal,
+      shippingCost: 0, // Will be set by admin when order is weighed (Rs 350/kg)
+      discount: 0,
+      total: subtotal, // Shipping will be added later
       paymentMethod,
+      paymentStatus: 'pending_advance',
+      advancePayment: {
+        amount: advanceAmount,
+        status: 'pending'
+      },
+      finalPayment: {
+        amount: subtotal - advanceAmount, // Remaining 50%, shipping will be added later
+        method: 'cod',
+        status: 'cod_pending'
+      },
       shippingAddress,
       isCustomOrder: true,
-      customDesign: design._id
+      customDesign: design._id,
+      status: 'pending',
+      statusHistory: [{
+        status: 'pending',
+        note: 'Custom design order created - awaiting advance payment',
+        updatedAt: new Date()
+      }]
     });
 
     // Update design status
@@ -241,10 +284,11 @@ export const acceptQuote = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Quote accepted, order created',
+      message: 'Quote accepted! Please pay the advance amount to confirm your order.',
       data: { design, order }
     });
   } catch (error) {
+    console.error('Accept quote error:', error);
     res.status(500).json({
       success: false,
       message: error.message

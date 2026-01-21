@@ -20,7 +20,14 @@
       "Bash(kill:*)",
       "Bash(docker rm:*)",
       "Bash(docker logs:*)",
-      "Bash(fuser:*)"
+      "Bash(fuser:*)",
+      "Bash(pm2 save:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(pm2 delete:*)",
+      "Bash(pm2 start:*)",
+      "Bash(pm2 list:*)",
+      "Bash(pm2 restart:*)"
     ]
   }
 }

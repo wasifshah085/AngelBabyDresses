@@ -182,26 +182,48 @@ export const createOrder = async (req, res) => {
 
     // Send order confirmation with payment instructions
     const lang = req.user.preferredLanguage || 'en';
-    const { subject, html } = emailTemplates.orderConfirmation(order, lang);
-    sendEmail({
-      to: shippingAddress.email || req.user.email,
-      subject,
-      html
-    });
+
+    // Get settings for notifications (optional - don't fail if not found)
+    let settings = {};
+    try {
+      settings = await Setting.findOne() || {};
+    } catch (e) {
+      // Settings not found, use defaults
+    }
+
+    // Send emails in try-catch to avoid failing the order
+    try {
+      const { subject, html } = emailTemplates.orderConfirmation(order, lang);
+      sendEmail({
+        to: shippingAddress.email || req.user.email,
+        subject,
+        html
+      });
+    } catch (emailError) {
+      console.error('Order confirmation email error:', emailError.message);
+    }
 
     if (settings.notifications?.whatsappNotifications && shippingAddress.phone) {
-      const message = whatsappMessages.orderConfirmation(order, lang);
-      sendWhatsAppMessage(shippingAddress.phone, message);
+      try {
+        const message = whatsappMessages.orderConfirmation(order, lang);
+        sendWhatsAppMessage(shippingAddress.phone, message);
+      } catch (whatsappError) {
+        console.error('WhatsApp notification error:', whatsappError.message);
+      }
     }
 
     // Send admin notification for payment verification
-    const adminEmail = process.env.ADMIN_EMAIL || settings.email || 'admin@angelbabydresses.com';
-    const { subject: adminSubject, html: adminHtml } = emailTemplates.adminNewOrder(order);
-    sendEmail({
-      to: adminEmail,
-      subject: adminSubject,
-      html: adminHtml
-    });
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || settings.email || 'admin@angelbabydresses.com';
+      const { subject: adminSubject, html: adminHtml } = emailTemplates.adminNewOrder(order);
+      sendEmail({
+        to: adminEmail,
+        subject: adminSubject,
+        html: adminHtml
+      });
+    } catch (adminEmailError) {
+      console.error('Admin notification email error:', adminEmailError.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -214,8 +236,8 @@ export const createOrder = async (req, res) => {
         finalMethod: 'cod',
         shippingNote: 'Shipping charges (Rs 350/kg) will be added to COD amount based on actual weight',
         accounts: {
-          easypaisa: '03471504434',
-          jazzcash: '03471504434',
+          easypaisa: '03341542572',
+          jazzcash: '03341542572',
           bank: {
             name: 'HBL',
             accountNumber: '16817905812303',
@@ -238,6 +260,7 @@ export const createOrder = async (req, res) => {
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
+      .populate('customDesign', 'uploadedImages designNumber')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -260,7 +283,9 @@ export const getOrder = async (req, res) => {
     const order = await Order.findOne({
       _id: req.params.id,
       user: req.user._id
-    }).populate('items.product', 'name slug images');
+    })
+      .populate('items.product', 'name slug images')
+      .populate('customDesign', 'uploadedImages designNumber description');
 
     if (!order) {
       return res.status(404).json({
@@ -287,7 +312,8 @@ export const getOrder = async (req, res) => {
 export const trackOrder = async (req, res) => {
   try {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber })
-      .select('orderNumber status statusHistory items total shippingAddress trackingNumber trackingUrl estimatedDelivery createdAt');
+      .select('orderNumber status statusHistory items total shippingAddress trackingNumber trackingUrl estimatedDelivery createdAt isCustomOrder customDesign')
+      .populate('customDesign', 'uploadedImages designNumber');
 
     if (!order) {
       return res.status(404).json({
@@ -386,6 +412,25 @@ export const submitAdvancePayment = async (req, res) => {
     order.paymentStatus = 'advance_submitted';
 
     await order.save();
+
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.FROM_EMAIL;
+      if (adminEmail) {
+        // Populate user info for the email
+        const populatedOrder = await Order.findById(order._id).populate('user', 'name email');
+        const emailData = emailTemplates.adminPaymentScreenshot(populatedOrder, 'advance');
+        await sendEmail({
+          to: adminEmail,
+          subject: emailData.subject,
+          html: emailData.html
+        });
+        console.log('Admin notification sent for advance payment screenshot');
+      }
+    } catch (emailError) {
+      console.error('Failed to send admin notification:', emailError);
+      // Don't fail the request if email fails
+    }
 
     res.json({
       success: true,
@@ -486,6 +531,25 @@ export const submitFinalPayment = async (req, res) => {
 
     await order.save();
 
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.FROM_EMAIL;
+      if (adminEmail) {
+        // Populate user info for the email
+        const populatedOrder = await Order.findById(order._id).populate('user', 'name email');
+        const emailData = emailTemplates.adminPaymentScreenshot(populatedOrder, 'final');
+        await sendEmail({
+          to: adminEmail,
+          subject: emailData.subject,
+          html: emailData.html
+        });
+        console.log('Admin notification sent for final payment screenshot');
+      }
+    } catch (emailError) {
+      console.error('Failed to send admin notification:', emailError);
+      // Don't fail the request if email fails
+    }
+
     res.json({
       success: true,
       message: 'Final payment submitted successfully. Waiting for approval.',
@@ -508,11 +572,11 @@ export const getPaymentAccounts = async (req, res) => {
       success: true,
       data: {
         easypaisa: {
-          number: '03471504434',
+          number: '03341542572',
           name: 'Quratulain Syed'
         },
         jazzcash: {
-          number: '03471504434',
+          number: '03341542572',
           name: 'Quratulain Syed'
         },
         bank: {

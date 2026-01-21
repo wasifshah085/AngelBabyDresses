@@ -131,7 +131,7 @@ const OrderDetail = () => {
         <h2 className="text-xl font-medium text-gray-900 mb-2">
           {t('orders.notFound')}
         </h2>
-        <Link to="/my-orders" className="btn btn-primary mt-4">
+        <Link to="/orders" className="btn btn-primary mt-4">
           {t('orders.backToOrders')}
         </Link>
       </div>
@@ -154,7 +154,7 @@ const OrderDetail = () => {
 
       <div className="container py-8">
         <Link
-          to="/my-orders"
+          to="/orders"
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
         >
           <FiArrowLeft />
@@ -220,12 +220,12 @@ const OrderDetail = () => {
                   <div className="grid sm:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">EasyPaisa</p>
-                      <p className="font-mono font-medium">03471504434</p>
+                      <p className="font-mono font-medium">03341542572</p>
                       <p className="text-gray-500 text-xs">Quratulain Syed</p>
                     </div>
                     <div>
                       <p className="text-gray-500">JazzCash</p>
-                      <p className="font-mono font-medium">03471504434</p>
+                      <p className="font-mono font-medium">03341542572</p>
                       <p className="text-gray-500 text-xs">Quratulain Syed</p>
                     </div>
                     <div>
@@ -346,7 +346,7 @@ const OrderDetail = () => {
                 {order.items?.map((item, index) => (
                   <div key={index} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
                     <img
-                      src={getImageUrl(item.product?.images?.[0]?.url || item.image)}
+                      src={getImageUrl(item.product?.images?.[0]?.url || item.image || order.customDesign?.uploadedImages?.[0]?.url)}
                       alt={item.name}
                       className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                     />
@@ -409,51 +409,52 @@ const OrderDetail = () => {
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t('cart.shipping')}</span>
-                  <span className="font-medium">
-                    {order.shippingCost === 0 ? t('cart.free') : `Rs. ${order.shippingCost}`}
+                  <span className={order.shippingCost > 0 ? 'font-medium' : 'text-gray-500 text-xs'}>
+                    {order.shippingCost > 0 ? `Rs. ${order.shippingCost?.toLocaleString()}` : (t('checkout.onDelivery') || 'On delivery (Rs 350/kg)')}
                   </span>
                 </div>
 
-                <hr className="my-4" />
+                <hr className="my-3" />
 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>{t('cart.total')}</span>
                   <span className="text-primary-600">Rs. {order.total?.toLocaleString()}</span>
                 </div>
+              </div>
 
-                {/* Payment Breakdown */}
-                <div className="mt-4 pt-4 border-t border-dashed space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('checkout.advancePayment') || 'Advance (50%)'}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Rs. {order.advancePayment?.amount?.toLocaleString()}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        order.advancePayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
-                        order.advancePayment?.status === 'submitted' ? 'bg-blue-100 text-blue-700' :
-                        order.advancePayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {order.advancePayment?.status === 'approved' ? 'Paid' :
-                         order.advancePayment?.status === 'submitted' ? 'Verifying' :
-                         order.advancePayment?.status === 'rejected' ? 'Rejected' : 'Pending'}
-                      </span>
-                    </div>
+              {/* Payment Breakdown */}
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <p className="text-xs text-gray-500 uppercase font-semibold">{t('checkout.paymentBreakdown') || 'Payment Breakdown'}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">{t('checkout.advancePayment') || 'Advance (50%)'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Rs. {order.advancePayment?.amount?.toLocaleString()}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      order.advancePayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      order.advancePayment?.status === 'submitted' ? 'bg-yellow-100 text-yellow-700' :
+                      order.advancePayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {order.advancePayment?.status === 'approved' ? t('orders.paid') || 'Paid' :
+                       order.advancePayment?.status === 'submitted' ? t('orders.verifying') || 'Verifying' :
+                       order.advancePayment?.status === 'rejected' ? t('orders.rejected') || 'Rejected' : t('orders.pending') || 'Pending'}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{t('checkout.finalPayment') || 'Final (50%)'}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Rs. {order.finalPayment?.amount?.toLocaleString()}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        order.finalPayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
-                        order.finalPayment?.status === 'submitted' ? 'bg-blue-100 text-blue-700' :
-                        order.finalPayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {order.finalPayment?.status === 'approved' ? 'Paid' :
-                         order.finalPayment?.status === 'submitted' ? 'Verifying' :
-                         order.finalPayment?.status === 'rejected' ? 'Rejected' : 'Pending'}
-                      </span>
-                    </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">{t('checkout.finalPayment') || 'Final (50%)'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Rs. {order.finalPayment?.amount?.toLocaleString()}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      order.finalPayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      order.finalPayment?.status === 'submitted' ? 'bg-yellow-100 text-yellow-700' :
+                      order.finalPayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {order.finalPayment?.status === 'approved' ? t('orders.paid') || 'Paid' :
+                       order.finalPayment?.status === 'submitted' ? t('orders.verifying') || 'Verifying' :
+                       order.finalPayment?.status === 'rejected' ? t('orders.rejected') || 'Rejected' : t('orders.pending') || 'Pending'}
+                    </span>
                   </div>
                 </div>
               </div>

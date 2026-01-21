@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { FiSearch, FiFilter, FiEye, FiMessageCircle } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiEye, FiMessageCircle, FiClock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { PageLoader } from '../../components/common/Loader';
@@ -97,9 +97,9 @@ const CustomDesigns = () => {
           {designs.map((design) => (
             <div key={design._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
               <div className="aspect-video bg-gray-100 relative">
-                {design.images?.[0]?.url ? (
+                {design.uploadedImages?.[0]?.url ? (
                   <img
-                    src={getImageUrl(design.images[0].url)}
+                    src={getImageUrl(design.uploadedImages[0].url)}
                     alt="Design"
                     className="w-full h-full object-cover"
                   />
@@ -135,8 +135,16 @@ const CustomDesigns = () => {
 
                 {design.quotedPrice && (
                   <div className="mt-3 pt-3 border-t">
-                    <span className="text-sm text-gray-500">{t('customDesign.quotedPrice')}: </span>
-                    <span className="font-bold text-primary-600">Rs. {design.quotedPrice.toLocaleString()}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">{t('customDesign.quotedPrice')}: </span>
+                      <span className="font-bold text-primary-600">Rs. {design.quotedPrice.toLocaleString()}</span>
+                    </div>
+                    {design.estimatedDays && (
+                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                        <FiClock className="w-4 h-4" />
+                        <span>{design.estimatedDays} {t('customDesign.days') || 'days'}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 

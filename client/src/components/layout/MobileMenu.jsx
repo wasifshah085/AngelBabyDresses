@@ -156,7 +156,17 @@ const MobileMenu = () => {
                   className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
                 >
                   <FiChevronRight className="w-5 h-5" />
-                  <span>{t('account.orders')}</span>
+                  <span>{t('account.orders') || 'My Orders'}</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/my-designs"
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
+                >
+                  <FiChevronRight className="w-5 h-5" />
+                  <span>{t('account.myDesigns') || 'My Custom Designs'}</span>
                 </Link>
               </li>
             </ul>

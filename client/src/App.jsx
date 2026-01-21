@@ -37,6 +37,7 @@ import AdminCategories from './pages/admin/Categories';
 import AdminOrders from './pages/admin/Orders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminCustomDesigns from './pages/admin/CustomDesigns';
+import AdminCustomDesignDetail from './pages/admin/CustomDesignDetail';
 import AdminCustomers from './pages/admin/Customers';
 import AdminSales from './pages/admin/Sales';
 import AdminCoupons from './pages/admin/Coupons';
@@ -137,6 +138,7 @@ function App() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="orders/:id" element={<AdminOrderDetail />} />
           <Route path="custom-designs" element={<AdminCustomDesigns />} />
+          <Route path="custom-designs/:id" element={<AdminCustomDesignDetail />} />
           <Route path="customers" element={<AdminCustomers />} />
           <Route path="sales" element={<AdminSales />} />
           <Route path="coupons" element={<AdminCoupons />} />

@@ -78,16 +78,19 @@ const Coupons = () => {
       setEditingCoupon(coupon);
       reset({
         code: coupon.code,
-        discountType: coupon.discountType,
+        discountType: coupon.type || coupon.discountType || 'percentage',
         discountValue: coupon.discountValue,
-        minPurchase: coupon.minPurchase,
-        maxDiscount: coupon.maxDiscount,
-        usageLimit: coupon.usageLimit,
-        expiresAt: coupon.expiresAt?.split('T')[0],
+        minPurchase: coupon.minOrderAmount || coupon.minPurchase || '',
+        maxDiscount: coupon.maxDiscount || '',
+        usageLimit: coupon.usageLimit || '',
+        startDate: coupon.startDate?.split('T')[0] || '',
+        endDate: coupon.endDate?.split('T')[0] || coupon.expiresAt?.split('T')[0] || '',
         isActive: coupon.isActive
       });
     } else {
       setEditingCoupon(null);
+      // Set default start date to today
+      const today = new Date().toISOString().split('T')[0];
       reset({
         code: '',
         discountType: 'percentage',
@@ -95,7 +98,8 @@ const Coupons = () => {
         minPurchase: '',
         maxDiscount: '',
         usageLimit: '',
-        expiresAt: '',
+        startDate: today,
+        endDate: '',
         isActive: true
       });
     }
@@ -113,12 +117,13 @@ const Coupons = () => {
     setLoading(true);
     const couponData = {
       code: data.code.toUpperCase(),
-      discountType: data.discountType,
+      type: data.discountType,
       discountValue: Number(data.discountValue),
-      minPurchase: data.minPurchase ? Number(data.minPurchase) : 0,
+      minOrderAmount: data.minPurchase ? Number(data.minPurchase) : 0,
       maxDiscount: data.maxDiscount ? Number(data.maxDiscount) : undefined,
       usageLimit: data.usageLimit ? Number(data.usageLimit) : undefined,
-      expiresAt: data.expiresAt || undefined,
+      startDate: data.startDate,
+      endDate: data.endDate,
       isActive: data.isActive
     };
 
@@ -205,28 +210,34 @@ const Coupons = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-medium text-primary-600">
-                        {coupon.discountType === 'percentage'
+                        {(coupon.type || coupon.discountType) === 'percentage'
                           ? `${coupon.discountValue}%`
                           : `Rs. ${coupon.discountValue}`}
                       </span>
-                      {coupon.maxDiscount && coupon.discountType === 'percentage' && (
+                      {coupon.maxDiscount && (coupon.type || coupon.discountType) === 'percentage' && (
                         <p className="text-xs text-gray-500">
                           Max: Rs. {coupon.maxDiscount}
                         </p>
                       )}
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {coupon.minPurchase > 0 ? `Rs. ${coupon.minPurchase.toLocaleString()}` : '-'}
+                      {(coupon.minOrderAmount || coupon.minPurchase) > 0 ? `Rs. ${(coupon.minOrderAmount || coupon.minPurchase).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {coupon.usedCount || 0}
                       {coupon.usageLimit && ` / ${coupon.usageLimit}`}
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {coupon.expiresAt ? (
-                        <div className="flex items-center gap-1">
-                          <FiCalendar className="w-4 h-4 text-gray-400" />
-                          {new Date(coupon.expiresAt).toLocaleDateString(language === 'ur' ? 'ur-PK' : 'en-US')}
+                      {(coupon.startDate || coupon.endDate) ? (
+                        <div className="text-xs">
+                          <div className="flex items-center gap-1">
+                            <FiCalendar className="w-3 h-3 text-gray-400" />
+                            {new Date(coupon.startDate).toLocaleDateString(language === 'ur' ? 'ur-PK' : 'en-US')}
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-gray-400">to</span>
+                            {new Date(coupon.endDate).toLocaleDateString(language === 'ur' ? 'ur-PK' : 'en-US')}
+                          </div>
                         </div>
                       ) : (
                         t('admin.noExpiry')
@@ -362,29 +373,46 @@ const Coupons = () => {
                 )}
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('admin.usageLimit')}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  {...register('usageLimit')}
+                  className="input"
+                  placeholder={t('admin.unlimited')}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('admin.usageLimit')}
+                    {t('admin.startDate')} *
                   </label>
                   <input
-                    type="number"
-                    min="1"
-                    {...register('usageLimit')}
-                    className="input"
-                    placeholder={t('admin.unlimited')}
+                    type="date"
+                    {...register('startDate', { required: t('validation.required') })}
+                    className={`input ${errors.startDate ? 'input-error' : ''}`}
                   />
+                  {errors.startDate && (
+                    <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('admin.expiryDate')}
+                    {t('admin.endDate')} *
                   </label>
                   <input
                     type="date"
-                    {...register('expiresAt')}
-                    className="input"
+                    {...register('endDate', { required: t('validation.required') })}
+                    className={`input ${errors.endDate ? 'input-error' : ''}`}
                   />
+                  {errors.endDate && (
+                    <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>
+                  )}
                 </div>
               </div>
 

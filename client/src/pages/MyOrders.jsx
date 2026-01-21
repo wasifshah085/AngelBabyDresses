@@ -106,7 +106,7 @@ const MyOrders = () => {
                   {order.items?.slice(0, 4).map((item, index) => (
                     <img
                       key={index}
-                      src={getImageUrl(item.product?.images?.[0]?.url || item.image)}
+                      src={getImageUrl(item.product?.images?.[0]?.url || item.image || order.customDesign?.uploadedImages?.[0]?.url)}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg shrink-0"
                     />

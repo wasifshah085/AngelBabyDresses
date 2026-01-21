@@ -15,11 +15,13 @@ import validate from '../middleware/validate.js';
 const router = express.Router();
 
 const createDesignValidation = [
-  body('type').isIn(['upload', 'builder']).withMessage('Invalid design type'),
   body('description').notEmpty().withMessage('Description is required'),
-  body('productType').isIn(['dress', 'shirt', 'pants', 'outfit', 'accessories', 'other']).withMessage('Invalid product type'),
   body('size').notEmpty().withMessage('Size is required'),
-  body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1')
+  body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+  body('whatsappNumber').matches(/^[0-9+]{10,15}$/).withMessage('Invalid WhatsApp number'),
+  body('preferredColors').optional().isString(),
+  body('fabricPreference').optional().isString(),
+  body('notes').optional().isString()
 ];
 
 // All routes are protected

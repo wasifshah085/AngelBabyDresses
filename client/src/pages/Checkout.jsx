@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiMapPin, FiCreditCard, FiCheck, FiInfo, FiUpload, FiX, FiImage } from 'react-icons/fi';
+import { FiMapPin, FiCreditCard, FiCheck, FiInfo, FiUpload, FiX, FiImage, FiPackage, FiTruck } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { cartAPI, ordersAPI, authAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore } from '../store/useStore';
@@ -64,36 +64,32 @@ const Checkout = () => {
   const cart = cartData?.data?.data;
   const addresses = userData?.data?.data?.addresses || [];
 
-  // Payment methods - manual payments only
+  // Payment methods
   const paymentMethods = [
     {
       id: 'easypaisa',
       name: 'EasyPaisa',
-      icon: FiCreditCard,
-      description: t('checkout.easypaisaDescription'),
-      account: '03471504434',
+      color: 'bg-green-50 border-green-200',
+      account: '03341542572',
       accountHolder: 'Quratulain Syed'
     },
     {
       id: 'jazzcash',
       name: 'JazzCash',
-      icon: FiCreditCard,
-      description: t('checkout.jazzcashDescription'),
-      account: '03471504434',
+      color: 'bg-red-50 border-red-200',
+      account: '03341542572',
       accountHolder: 'Quratulain Syed'
     },
     {
       id: 'bank_transfer',
-      name: t('checkout.bankTransfer'),
-      icon: FiCreditCard,
-      description: t('checkout.bankDescription'),
+      name: 'Bank Transfer (HBL)',
+      color: 'bg-blue-50 border-blue-200',
       bankName: 'HBL (Habib Bank Limited)',
       account: '16817905812303',
       accountHolder: 'Quratulain Syed'
     }
   ];
 
-  const shippingCost = 0;
   const total = cart?.total || 0;
   const advanceAmount = Math.ceil((cart?.subtotal || 0) / 2);
   const finalAmount = (cart?.subtotal || 0) - advanceAmount;
@@ -107,11 +103,11 @@ const Checkout = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast.error(t('validation.imageOnly') || 'Please select an image file');
+        toast.error('Please select an image file');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(t('validation.fileTooLarge') || 'File size must be less than 5MB');
+        toast.error('File size must be less than 5MB');
         return;
       }
       setPaymentScreenshot(file);
@@ -134,13 +130,12 @@ const Checkout = () => {
     }
 
     if (!paymentScreenshot) {
-      toast.error(t('validation.uploadScreenshot') || 'Please upload payment screenshot');
+      toast.error('Please upload payment screenshot');
       return;
     }
 
     setLoading(true);
 
-    // Create FormData to send file with order
     const formData = new FormData();
     formData.append('shippingAddress', JSON.stringify(selectedAddress));
     formData.append('paymentMethod', paymentMethod);
@@ -164,12 +159,32 @@ const Checkout = () => {
       </Helmet>
 
       <div className="container py-8">
-        <h1 className="text-2xl lg:text-3xl font-heading font-bold text-gray-900 mb-8">
+        <h1 className="text-2xl lg:text-3xl font-heading font-bold text-gray-900 mb-6">
           {t('checkout.title')}
         </h1>
 
+        {/* How Payment Works - Compact Banner */}
+        <div className="bg-gradient-to-r from-primary-50 to-pink-50 border border-primary-100 rounded-xl p-4 mb-8">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">1</div>
+              <span className="text-gray-700">Pay 50% Now</span>
+            </div>
+            <div className="text-gray-300">→</div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">2</div>
+              <span className="text-gray-700">We Verify & Start</span>
+            </div>
+            <div className="text-gray-300">→</div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">3</div>
+              <span className="text-gray-700">Pay 50% + Shipping on Delivery</span>
+            </div>
+          </div>
+        </div>
+
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-12 overflow-x-auto">
+        <div className="flex items-center justify-center mb-8">
           {[
             { num: 1, label: t('checkout.shipping') },
             { num: 2, label: t('checkout.payment') },
@@ -177,7 +192,7 @@ const Checkout = () => {
           ].map((s, index) => (
             <div key={s.num} className="flex items-center">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-medium ${
+                className={`flex items-center justify-center w-10 h-10 rounded-full font-medium transition-all ${
                   step >= s.num
                     ? 'bg-primary-500 text-white'
                     : 'bg-gray-200 text-gray-500'
@@ -185,11 +200,11 @@ const Checkout = () => {
               >
                 {step > s.num ? <FiCheck /> : s.num}
               </div>
-              <span className={`ml-2 whitespace-nowrap ${step >= s.num ? 'text-gray-900' : 'text-gray-500'}`}>
+              <span className={`ml-2 hidden sm:inline whitespace-nowrap ${step >= s.num ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                 {s.label}
               </span>
               {index < 2 && (
-                <div className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 ${step > s.num ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                <div className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded ${step > s.num ? 'bg-primary-500' : 'bg-gray-200'}`} />
               )}
             </div>
           ))}
@@ -214,9 +229,9 @@ const Checkout = () => {
                       {addresses.map((addr, index) => (
                         <label
                           key={index}
-                          className={`block border rounded-lg p-4 cursor-pointer transition-colors ${
+                          className={`block border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedAddress === addr
-                              ? 'border-primary-500 bg-primary-50'
+                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
                               : 'border-gray-200 hover:border-primary-300'
                           }`}
                         >
@@ -323,6 +338,8 @@ const Checkout = () => {
                         <option value="KPK">KPK</option>
                         <option value="Balochistan">Balochistan</option>
                         <option value="Islamabad">Islamabad</option>
+                        <option value="AJK">Azad Kashmir</option>
+                        <option value="GB">Gilgit-Baltistan</option>
                       </select>
                       {errors.province && (
                         <p className="text-red-500 text-sm mt-1">{errors.province.message}</p>
@@ -351,72 +368,74 @@ const Checkout = () => {
             {/* Step 2: Payment Method */}
             {step === 2 && (
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-heading font-semibold mb-6 flex items-center gap-2">
+                <h2 className="text-lg font-heading font-semibold mb-4 flex items-center gap-2">
                   <FiCreditCard className="w-5 h-5 text-primary-500" />
                   {t('checkout.paymentMethod')}
                 </h2>
 
-                {/* Payment Notice */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <FiInfo className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">{t('checkout.madeToOrderNotice') || 'Made-to-Order Payment'}</p>
-                      <p>{t('checkout.advancePaymentInfo') || 'We require 50% advance payment when placing order. The remaining 50% is due when your order is ready for delivery.'}</p>
-                    </div>
-                  </div>
+                {/* Amount to Pay */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-green-700 mb-1">Amount to pay now (50% advance):</p>
+                  <p className="text-2xl font-bold text-green-800">Rs. {advanceAmount.toLocaleString()}</p>
                 </div>
 
-                <div className="space-y-3">
+                {/* Payment Options */}
+                <div className="space-y-3 mb-6">
                   {paymentMethods.map((method) => (
                     <label
                       key={method.id}
-                      className={`block border rounded-lg p-4 cursor-pointer transition-colors ${
+                      className={`block border-2 rounded-xl p-4 cursor-pointer transition-all ${
                         paymentMethod === method.id
                           ? 'border-primary-500 bg-primary-50'
                           : 'border-gray-200 hover:border-primary-300'
                       }`}
                     >
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-center gap-3">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value={method.id}
                           checked={paymentMethod === method.id}
                           onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="mt-1"
+                          className="w-4 h-4 text-primary-500"
                         />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <method.icon className="w-5 h-5 text-gray-600" />
-                            <span className="font-medium">{method.name}</span>
-                          </div>
-                          <p className="text-sm text-gray-500 mt-1">{method.description}</p>
-
-                          {/* Account Details */}
-                          {paymentMethod === method.id && (
-                            <div className="mt-3 p-3 bg-white rounded border text-sm">
-                              {method.bankName && (
-                                <p><span className="text-gray-500">Bank:</span> {method.bankName}</p>
-                              )}
-                              <p><span className="text-gray-500">{t('checkout.accountNumber') || 'Account'}:</span> <span className="font-mono font-medium">{method.account}</span></p>
-                              <p><span className="text-gray-500">{t('checkout.accountHolder') || 'Name'}:</span> {method.accountHolder}</p>
-                            </div>
-                          )}
-                        </div>
+                        <span className="font-semibold text-gray-900">{method.name}</span>
                       </div>
+
+                      {paymentMethod === method.id && (
+                        <div className={`mt-3 p-3 rounded-lg ${method.color} text-sm`}>
+                          {method.bankName && (
+                            <p className="mb-1"><span className="text-gray-600">Bank:</span> <span className="font-medium">{method.bankName}</span></p>
+                          )}
+                          <p className="mb-1">
+                            <span className="text-gray-600">Account:</span>{' '}
+                            <span className="font-mono font-bold text-gray-900">{method.account}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(method.account);
+                                toast.success('Account number copied!');
+                              }}
+                              className="ml-2 text-primary-600 hover:text-primary-700 text-xs"
+                            >
+                              Copy
+                            </button>
+                          </p>
+                          <p><span className="text-gray-600">Name:</span> <span className="font-medium">{method.accountHolder}</span></p>
+                        </div>
+                      )}
                     </label>
                   ))}
                 </div>
 
-                {/* Screenshot Upload Section */}
-                <div className="mt-6 pt-6 border-t">
-                  <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                    <FiImage className="w-5 h-5 text-primary-500" />
-                    {t('checkout.uploadPaymentProof') || 'Upload Payment Screenshot'} *
+                {/* Screenshot Upload */}
+                <div className="border-t pt-6">
+                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <FiUpload className="w-5 h-5 text-primary-500" />
+                    Upload Payment Screenshot *
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    {t('checkout.uploadInstructions') || `Please make the advance payment of Rs. ${advanceAmount.toLocaleString()} to the account above, then upload the screenshot.`}
+                    Transfer Rs. {advanceAmount.toLocaleString()} to the account above, then upload the screenshot.
                   </p>
 
                   <input
@@ -432,7 +451,7 @@ const Checkout = () => {
                       <img
                         src={screenshotPreview}
                         alt="Payment screenshot"
-                        className="max-h-48 rounded-lg border shadow-sm"
+                        className="max-h-48 rounded-lg border-2 border-green-300 shadow-sm"
                       />
                       <button
                         onClick={clearScreenshot}
@@ -442,17 +461,18 @@ const Checkout = () => {
                       </button>
                       <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
                         <FiCheck className="w-4 h-4" />
-                        {t('checkout.screenshotUploaded') || 'Screenshot uploaded'}
+                        Screenshot uploaded successfully
                       </p>
                     </div>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                      className="w-full flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors"
                     >
-                      <FiUpload className="w-8 h-8 text-gray-400" />
-                      <span className="text-gray-600 font-medium">{t('checkout.clickToUpload') || 'Click to upload screenshot'}</span>
-                      <span className="text-sm text-gray-400">{t('checkout.imageFormats') || 'PNG, JPG up to 5MB'}</span>
+                      <FiUpload className="w-10 h-10 text-gray-400" />
+                      <span className="text-gray-700 font-medium">Click to upload screenshot</span>
+                      <span className="text-xs text-gray-400">PNG, JPG up to 5MB</span>
                     </button>
                   )}
                 </div>
@@ -467,7 +487,7 @@ const Checkout = () => {
                   <button
                     onClick={() => {
                       if (!paymentScreenshot) {
-                        toast.error(t('validation.uploadScreenshot') || 'Please upload payment screenshot first');
+                        toast.error('Please upload payment screenshot first');
                         return;
                       }
                       setStep(3);
@@ -482,88 +502,87 @@ const Checkout = () => {
 
             {/* Step 3: Review */}
             {step === 3 && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-lg font-heading font-semibold mb-4">
-                    {t('checkout.shippingAddress')}
-                  </h2>
-                  <div className="text-gray-600">
+              <div className="space-y-4">
+                {/* Shipping Address */}
+                <div className="bg-white rounded-xl shadow-sm p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <FiMapPin className="w-4 h-4 text-primary-500" />
+                      Shipping Address
+                    </h3>
+                    <button onClick={() => setStep(1)} className="text-primary-600 text-sm hover:underline">
+                      Edit
+                    </button>
+                  </div>
+                  <div className="text-sm text-gray-600">
                     <p className="font-medium text-gray-900">{selectedAddress?.fullName}</p>
                     <p>{selectedAddress?.address}</p>
                     <p>{selectedAddress?.city}, {selectedAddress?.province} {selectedAddress?.postalCode}</p>
                     <p>{selectedAddress?.phone}</p>
                   </div>
-                  <button onClick={() => setStep(1)} className="text-primary-600 text-sm mt-2">
-                    {t('common.edit')}
-                  </button>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-lg font-heading font-semibold mb-4">
-                    {t('checkout.paymentMethod')}
-                  </h2>
-                  <p className="text-gray-600">
-                    {paymentMethods.find(m => m.id === paymentMethod)?.name}
-                  </p>
-                  <button onClick={() => setStep(2)} className="text-primary-600 text-sm mt-2">
-                    {t('common.edit')}
-                  </button>
+                {/* Payment Info */}
+                <div className="bg-white rounded-xl shadow-sm p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <FiCreditCard className="w-4 h-4 text-primary-500" />
+                      Payment
+                    </h3>
+                    <button onClick={() => setStep(2)} className="text-primary-600 text-sm hover:underline">
+                      Edit
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <p className="text-sm text-gray-600">
+                      {paymentMethods.find(m => m.id === paymentMethod)?.name}
+                    </p>
+                    {screenshotPreview && (
+                      <img src={screenshotPreview} alt="Payment" className="h-12 rounded border" />
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-lg font-heading font-semibold mb-4">
-                    {t('checkout.orderItems')}
-                  </h2>
-                  <div className="space-y-4">
+                {/* Order Items */}
+                <div className="bg-white rounded-xl shadow-sm p-5">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <FiPackage className="w-4 h-4 text-primary-500" />
+                    Order Items ({cart?.items?.length})
+                  </h3>
+                  <div className="space-y-3">
                     {cart?.items?.map((item) => (
-                      <div key={item._id} className="flex gap-4">
+                      <div key={item._id} className="flex gap-3">
                         <img
                           src={getImageUrl(item.product?.images?.[0]?.url)}
                           alt={item.product?.name?.[language] || item.product?.name?.en}
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-14 h-14 object-cover rounded-lg"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
+                          <p className="font-medium text-sm truncate">
                             {item.product?.name?.[language] || item.product?.name?.en}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            {item.ageRange} {item.color && `/ ${item.color.name}`} x {item.quantity}
+                          <p className="text-xs text-gray-500">
+                            {item.ageRange} {item.color && `• ${item.color.name}`} • Qty: {item.quantity}
                           </p>
                         </div>
-                        <p className="font-medium whitespace-nowrap">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-medium text-sm">Rs. {(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Payment Screenshot Preview */}
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-lg font-heading font-semibold mb-4 flex items-center gap-2">
-                    <FiImage className="w-5 h-5 text-primary-500" />
-                    {t('checkout.paymentScreenshot') || 'Payment Screenshot'}
-                  </h2>
-                  {screenshotPreview && (
-                    <img
-                      src={screenshotPreview}
-                      alt="Payment screenshot"
-                      className="max-h-32 rounded-lg border"
-                    />
-                  )}
-                  <button onClick={() => setStep(2)} className="text-primary-600 text-sm mt-2">
-                    {t('common.edit')}
-                  </button>
-                </div>
-
-                {/* What happens next */}
-                <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                  <h3 className="font-heading font-semibold text-green-800 mb-3">
-                    {t('checkout.whatHappensNext') || 'What Happens Next?'}
-                  </h3>
-                  <div className="text-sm text-green-800 space-y-2">
-                    <p>{t('checkout.nextStep1') || '1. Your payment will be verified by our team (usually within a few hours)'}</p>
-                    <p>{t('checkout.nextStep2') || '2. Once approved, we will start making your order'}</p>
-                    <p>{t('checkout.nextStep3') || '3. When ready, you will be notified to pay the remaining 50%'}</p>
-                    <p>{t('checkout.nextStep4') || '4. After final payment, your order will be shipped'}</p>
+                {/* Important Notice */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                  <div className="flex gap-3">
+                    <FiInfo className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-yellow-800">
+                      <p className="font-semibold mb-1">What happens next?</p>
+                      <ul className="space-y-1 text-yellow-700">
+                        <li>• We'll verify your payment within 24 hours</li>
+                        <li>• Your order will be prepared with care</li>
+                        <li>• Pay remaining Rs. {finalAmount.toLocaleString()} + shipping (Rs 350/kg) on delivery</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
@@ -586,12 +605,35 @@ const Checkout = () => {
             )}
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary Sidebar */}
           <div className="mt-8 lg:mt-0">
-            <div className="bg-gray-50 rounded-xl p-6 sticky top-24">
+            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
               <h2 className="text-lg font-heading font-semibold mb-4">
                 {t('cart.orderSummary')}
               </h2>
+
+              {/* Cart Items Preview */}
+              <div className="space-y-3 mb-4 pb-4 border-b">
+                {cart?.items?.slice(0, 3).map((item) => (
+                  <div key={item._id} className="flex gap-3">
+                    <img
+                      src={getImageUrl(item.product?.images?.[0]?.url)}
+                      alt=""
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {item.product?.name?.[language] || item.product?.name?.en}
+                      </p>
+                      <p className="text-xs text-gray-500">x{item.quantity}</p>
+                    </div>
+                    <p className="text-sm font-medium">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                  </div>
+                ))}
+                {cart?.items?.length > 3 && (
+                  <p className="text-xs text-gray-500 text-center">+{cart.items.length - 3} more items</p>
+                )}
+              </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -607,32 +649,30 @@ const Checkout = () => {
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('cart.shippingTitle')}</span>
-                  <span className="font-medium text-sm text-gray-500">{t('cart.shippingInfo')}</span>
+                  <span className="text-gray-600">{t('cart.shipping')}</span>
+                  <span className="text-gray-500 text-xs">{t('checkout.onDelivery') || 'On delivery (Rs 350/kg)'}</span>
                 </div>
 
-                <hr className="my-4" />
+                <hr className="my-3" />
 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>{t('cart.total')}</span>
                   <span className="text-primary-600">Rs. {total.toLocaleString()}</span>
                 </div>
-
-                {/* Payment Breakdown */}
-                <div className="mt-4 pt-4 border-t border-dashed">
-                  <p className="text-xs text-gray-500 uppercase mb-2">{t('checkout.paymentBreakdown') || 'Payment Breakdown'}</p>
-                  <div className="flex justify-between text-green-700 bg-green-50 p-2 rounded mb-2">
-                    <span>{t('checkout.advancePayment') || 'Advance (50%)'}</span>
-                    <span className="font-semibold">Rs. {advanceAmount.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>{t('checkout.finalPayment') || 'On Completion (50%)'}</span>
-                    <span className="font-medium">Rs. {finalAmount.toLocaleString()}</span>
-                  </div>
-                </div>
               </div>
 
-
+              {/* Payment Breakdown */}
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <p className="text-xs text-gray-500 uppercase font-semibold">{t('checkout.paymentBreakdown') || 'Payment Breakdown'}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">{t('checkout.advancePayment') || 'Advance (50%)'}</span>
+                  <span className="font-medium text-sm">Rs. {advanceAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">{t('checkout.finalPayment') || 'Final (50%)'}</span>
+                  <span className="font-medium text-sm">Rs. {finalAmount.toLocaleString()} + {t('cart.shipping')}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

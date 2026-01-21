@@ -11,29 +11,29 @@ const OrderSuccess = () => {
   const steps = [
     {
       icon: FiClock,
-      title: t('orderSuccess.step1Title') || 'Payment Verification',
-      description: t('orderSuccess.step1Desc') || 'Our team will verify your advance payment within 1 hour. Please be patient while we confirm your payment.',
+      title: 'Payment Verification',
+      description: 'Our team will verify your advance payment within 1 hour. Please be patient while we confirm your payment.',
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-100'
     },
     {
       icon: FiCheckCircle,
-      title: t('orderSuccess.step2Title') || 'Order Confirmation',
-      description: t('orderSuccess.step2Desc') || 'Once payment is verified, you\'ll receive a confirmation via email and WhatsApp. Your order will enter production.',
+      title: 'Order Confirmation',
+      description: 'Once payment is verified, you\'ll receive a confirmation via email and WhatsApp. Your order will enter production.',
       color: 'text-green-500',
       bgColor: 'bg-green-100'
     },
     {
       icon: FiPackage,
-      title: t('orderSuccess.step3Title') || 'Production & Quality Check',
-      description: t('orderSuccess.step3Desc') || 'Your dress will be carefully crafted (7-14 days). We\'ll notify you when it\'s ready for shipping.',
+      title: 'Production & Quality Check',
+      description: 'Your dress will be carefully crafted (7-14 days). We\'ll notify you when it\'s ready for shipping.',
       color: 'text-blue-500',
       bgColor: 'bg-blue-100'
     },
     {
       icon: FiTruck,
-      title: t('orderSuccess.step4Title') || 'Delivery & Final Payment',
-      description: t('orderSuccess.step4Desc') || 'Pay the remaining amount via Cash on Delivery when you receive your order.',
+      title: 'Delivery & Final Payment',
+      description: 'Pay the remaining 50% + shipping (Rs 350/kg) via Cash on Delivery when you receive your order.',
       color: 'text-primary-500',
       bgColor: 'bg-primary-100'
     }
@@ -42,7 +42,7 @@ const OrderSuccess = () => {
   return (
     <>
       <Helmet>
-        <title>{t('orders.orderSuccess')} | Angel Baby Dresses</title>
+        <title>Order Placed Successfully | Angel Baby Dresses</title>
       </Helmet>
 
       <div className="container py-12 lg:py-16">
@@ -54,16 +54,16 @@ const OrderSuccess = () => {
             </div>
 
             <h1 className="text-3xl font-heading font-bold text-gray-900 mb-3">
-              {t('orders.thankYou')}
+              Thank You for Your Order!
             </h1>
 
             <p className="text-gray-600 mb-2">
-              {t('orders.orderPlaced')}
+              Your order has been placed successfully.
             </p>
 
             {orderNumber && (
               <div className="inline-block bg-primary-50 px-6 py-3 rounded-lg mt-2">
-                <p className="text-sm text-gray-600">{t('orders.orderNumber')}</p>
+                <p className="text-sm text-gray-600">Order Number</p>
                 <p className="text-xl font-bold text-primary-600">{orderNumber}</p>
               </div>
             )}
@@ -72,7 +72,7 @@ const OrderSuccess = () => {
           {/* What Happens Next */}
           <div className="bg-white rounded-2xl shadow-sm p-6 lg:p-8 mb-8">
             <h2 className="text-xl font-heading font-bold text-gray-900 mb-6 text-center">
-              {t('orders.whatNext') || 'What Happens Next?'}
+              What Happens Next?
             </h2>
 
             <div className="space-y-6">
@@ -96,7 +96,7 @@ const OrderSuccess = () => {
           {/* Important Notice */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
             <p className="text-yellow-800 text-sm text-center">
-              <strong>{t('common.note') || 'Note'}:</strong> {t('orderSuccess.verificationNote') || 'Payment verification typically takes less than 1 hour during business hours (10 AM - 8 PM). If you haven\'t received confirmation within 2 hours, please contact us.'}
+              <strong>Note:</strong> Payment verification typically takes less than 1 hour during business hours (10 AM - 8 PM). If you haven't received confirmation within 2 hours, please contact us.
             </p>
           </div>
 
@@ -104,10 +104,10 @@ const OrderSuccess = () => {
           <div className="bg-green-50 rounded-xl p-6 text-center mb-8">
             <FaWhatsapp className="w-8 h-8 text-green-500 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-2">
-              {t('orderSuccess.needHelp') || 'Need Help?'}
+              Need Help?
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              {t('orderSuccess.contactText') || 'If you have any questions about your order, feel free to reach out.'}
+              If you have any questions about your order, feel free to reach out.
             </p>
             <a
               href="https://wa.me/923471504434"
@@ -116,18 +116,18 @@ const OrderSuccess = () => {
               className="inline-flex items-center gap-2 bg-green-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm"
             >
               <FaWhatsapp className="w-4 h-4" />
-              {t('orderSuccess.chatWhatsApp') || 'Chat on WhatsApp'}
+              Chat on WhatsApp
             </a>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to={`/orders`} className="btn btn-primary">
-              {t('orders.viewOrders') || 'View My Orders'}
+              View My Orders
               <FiArrowRight className="w-5 h-5 ms-2" />
             </Link>
             <Link to="/shop" className="btn btn-outline">
-              {t('cart.continueShopping') || 'Continue Shopping'}
+              {t('cart.continueShopping')}
             </Link>
           </div>
         </div>

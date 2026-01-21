@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { FiEdit3, FiEye, FiChevronRight, FiPlus } from 'react-icons/fi';
+import { FiEdit3, FiEye, FiChevronRight, FiPlus, FiClock } from 'react-icons/fi';
 import { customDesignAPI } from '../services/api';
 import { PageLoader } from '../components/common/Loader';
 import { getImageUrl } from '../utils/imageUrl';
@@ -14,7 +14,8 @@ const statusColors = {
   accepted: 'bg-green-100 text-green-800',
   in_progress: 'bg-indigo-100 text-indigo-800',
   completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800'
+  cancelled: 'bg-red-100 text-red-800',
+  awaitingVerification: 'bg-orange-100 text-orange-800'
 };
 
 const MyDesigns = () => {
@@ -67,9 +68,9 @@ const MyDesigns = () => {
               >
                 {/* Design Image */}
                 <div className="aspect-video bg-gray-100 relative">
-                  {design.images?.[0]?.url ? (
+                  {design.uploadedImages?.[0]?.url ? (
                     <img
-                      src={getImageUrl(design.images[0].url)}
+                      src={getImageUrl(design.uploadedImages[0].url)}
                       alt={t('customDesign.designImage')}
                       className="w-full h-full object-cover"
                     />
@@ -100,11 +101,19 @@ const MyDesigns = () => {
                   </div>
 
                   {design.quotedPrice && (
-                    <div className="mt-3 pt-3 border-t flex items-center justify-between">
-                      <span className="text-sm text-gray-500">{t('customDesign.quotedPrice')}</span>
-                      <span className="font-heading font-bold text-primary-600">
-                        Rs. {design.quotedPrice.toLocaleString()}
-                      </span>
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-500">{t('customDesign.quotedPrice')}</span>
+                        <span className="font-heading font-bold text-primary-600">
+                          Rs. {design.quotedPrice.toLocaleString()}
+                        </span>
+                      </div>
+                      {design.estimatedDays && (
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <FiClock className="w-4 h-4" />
+                          <span>{t('customDesign.estimatedDaysValue', { days: design.estimatedDays }) || `Estimated: ${design.estimatedDays} days`}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 

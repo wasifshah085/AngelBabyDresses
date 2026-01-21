@@ -180,7 +180,7 @@ const Products = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          to={`/admin/products/${product._id}`}
+                          to={`/admin/products/${product._id}/edit`}
                           className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-primary-600"
                         >
                           <FiEdit2 className="w-4 h-4" />
