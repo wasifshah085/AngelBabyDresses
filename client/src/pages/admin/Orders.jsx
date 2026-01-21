@@ -58,17 +58,6 @@ const Orders = () => {
     })
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => managementAPI.updateOrderStatus(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-orders']);
-      toast.success(t('admin.orderUpdated'));
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || t('messages.error'));
-    }
-  });
-
   const orders = data?.data?.data || [];
   const pagination = data?.data?.pagination || {};
 
@@ -182,19 +171,9 @@ const Orders = () => {
                       <span className="font-medium text-gray-900">Rs. {order.total?.toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateStatusMutation.mutate({ id: order._id, status: e.target.value })}
-                        disabled={updateStatusMutation.isPending || order.status === 'cancelled'}
-                        className={`text-sm font-medium rounded-full px-3 py-1 border-0 cursor-pointer ${statusColors[order.status]}`}
-                      >
-                        <option value="pending">{t('orders.status.pending')}</option>
-                        <option value="confirmed">{t('orders.status.confirmed')}</option>
-                        <option value="processing">{t('orders.status.processing')}</option>
-                        <option value="shipped">{t('orders.status.shipped')}</option>
-                        <option value="delivered">{t('orders.status.delivered')}</option>
-                        <option value="cancelled">{t('orders.status.cancelled')}</option>
-                      </select>
+                      <span className={`text-sm font-medium rounded-full px-3 py-1 ${statusColors[order.status]}`}>
+                        {t(`orders.status.${order.status}`)}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1">

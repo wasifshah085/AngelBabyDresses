@@ -21,16 +21,20 @@ const Shop = () => {
 
   const query = searchParams.get('q') || '';
   const filterType = searchParams.get('filter') || '';
+  const categorySlug = searchParams.get('category') || '';
   const page = parseInt(searchParams.get('page')) || 1;
 
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', filters, query, filterType, page],
+    queryKey: ['products', filters, query, filterType, categorySlug, page],
     queryFn: () => {
       if (query) {
         return productsAPI.search(query, { ...filters, page });
       }
       if (filterType === 'sale') {
         return productsAPI.getSale({ ...filters, page });
+      }
+      if (categorySlug) {
+        return productsAPI.getByCategory(categorySlug, { ...filters, page });
       }
       return productsAPI.getAll({ ...filters, filter: filterType, page });
     }
@@ -77,6 +81,11 @@ const Shop = () => {
     if (query) return `${t('common.search')}: "${query}"`;
     if (filterType === 'new') return t('common.newArrivals');
     if (filterType === 'sale') return t('common.sale');
+    if (categorySlug) {
+      // Show category name from products data if available
+      const categoryName = productsData?.data?.category?.name?.en || categorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return categoryName;
+    }
     return t('common.products');
   };
 

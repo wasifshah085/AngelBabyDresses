@@ -8,7 +8,8 @@ import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import { FiArrowRight, FiTruck, FiShield, FiRefreshCw, FiHeart } from 'react-icons/fi';
 import ProductCard from '../components/product/ProductCard';
 import { PageLoader } from '../components/common/Loader';
-import { productsAPI } from '../services/api';
+import { productsAPI, categoriesAPI } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -106,6 +107,13 @@ const Home = () => {
     queryFn: () => productsAPI.getNewArrivals(8)
   });
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll()
+  });
+
+  const categories = categoriesData?.data?.data || [];
+
   // Features with icons - memoized to prevent re-creation
   const features = useMemo(() => FEATURE_ICONS.map((icon, index) => ({
     icon,
@@ -143,6 +151,54 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Shop by Category */}
+      {categories.length > 0 && (
+        <section className="py-16">
+          <div className="container">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-3xl font-heading font-bold text-gray-900">
+                {t('home.shopByCategory', { defaultValue: 'Shop by Category' })}
+              </h2>
+              <Link to="/shop" className="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-2">
+                {t('common.viewAll')}
+                <FiArrowRight />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {categories.filter(cat => cat.isActive).slice(0, 8).map((category) => (
+                <Link
+                  key={category._id}
+                  to={`/shop?category=${category.slug}`}
+                  className="group relative overflow-hidden rounded-2xl bg-gray-100 aspect-square"
+                >
+                  {category.image?.url ? (
+                    <img
+                      src={getImageUrl(category.image.url)}
+                      alt={category.name?.en || category.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                    <h3 className="font-heading font-semibold text-lg">
+                      {category.name?.en || category.name}
+                    </h3>
+                    {category.productCount > 0 && (
+                      <p className="text-white/80 text-sm">
+                        {category.productCount} {t('common.products', { defaultValue: 'products' })}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Products */}
       <section className="py-16 bg-gray-50">

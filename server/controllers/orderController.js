@@ -236,8 +236,8 @@ export const createOrder = async (req, res) => {
         finalMethod: 'cod',
         shippingNote: 'Shipping charges (Rs 350/kg) will be added to COD amount based on actual weight',
         accounts: {
-          easypaisa: '03341542572',
-          jazzcash: '03341542572',
+          easypaisa: '03471504434',
+          jazzcash: '03471504434',
           bank: {
             name: 'HBL',
             accountNumber: '16817905812303',
@@ -572,11 +572,11 @@ export const getPaymentAccounts = async (req, res) => {
       success: true,
       data: {
         easypaisa: {
-          number: '03341542572',
+          number: '03471504434',
           name: 'Quratulain Syed'
         },
         jazzcash: {
-          number: '03341542572',
+          number: '03471504434',
           name: 'Quratulain Syed'
         },
         bank: {

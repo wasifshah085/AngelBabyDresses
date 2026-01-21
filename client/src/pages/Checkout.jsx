@@ -70,14 +70,14 @@ const Checkout = () => {
       id: 'easypaisa',
       name: 'EasyPaisa',
       color: 'bg-green-50 border-green-200',
-      account: '03341542572',
+      account: '03471504434',
       accountHolder: 'Quratulain Syed'
     },
     {
       id: 'jazzcash',
       name: 'JazzCash',
       color: 'bg-red-50 border-red-200',
-      account: '03341542572',
+      account: '03471504434',
       accountHolder: 'Quratulain Syed'
     },
     {

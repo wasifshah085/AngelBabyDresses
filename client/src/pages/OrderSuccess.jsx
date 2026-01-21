@@ -12,7 +12,7 @@ const OrderSuccess = () => {
     {
       icon: FiClock,
       title: 'Payment Verification',
-      description: 'Our team will verify your advance payment within 1 hour. Please be patient while we confirm your payment.',
+      description: 'Our team will verify your advance payment within 24 hours. Please be patient while we confirm your payment.',
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-100'
     },
@@ -96,7 +96,7 @@ const OrderSuccess = () => {
           {/* Important Notice */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
             <p className="text-yellow-800 text-sm text-center">
-              <strong>Note:</strong> Payment verification typically takes less than 1 hour during business hours (10 AM - 8 PM). If you haven't received confirmation within 2 hours, please contact us.
+              <strong>Note:</strong> Payment verification typically takes within 24 hours. If you haven't received confirmation, please contact us on WhatsApp.
             </p>
           </div>
 

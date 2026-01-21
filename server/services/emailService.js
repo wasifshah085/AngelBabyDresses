@@ -37,8 +37,8 @@ export const sendEmail = async ({ to, subject, html, text }) => {
 
 // Social media and contact links
 const socialLinks = {
-  whatsapp: '03341542572',
-  whatsappUrl: 'https://wa.me/923341542572',
+  whatsapp: '03471504434',
+  whatsappUrl: 'https://wa.me/923471504434',
   instagram: 'https://www.instagram.com/angelbabydresses_official?igsh=MWlnM3VidGJtaHMzeA==',
   facebook: 'https://www.facebook.com/share/17kYD7ba11/',
   website: process.env.CLIENT_URL || 'https://angelbabydresses.com'
@@ -146,7 +146,7 @@ export const emailTemplates = {
 
               <h4>${isUrdu ? 'ادائیگی کے اکاؤنٹس:' : 'Payment Accounts:'}</h4>
               <div class="account-info">
-                <p><strong>JazzCash / Easypaisa:</strong> 03341542572</p>
+                <p><strong>JazzCash / Easypaisa:</strong> 03471504434</p>
                 <p><strong>Account Name:</strong> Quratulain Syed</p>
               </div>
               <div class="account-info">
@@ -734,7 +734,7 @@ export const emailTemplates = {
 
             <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Payment Accounts:</strong></p>
-              <p>JazzCash/Easypaisa: 03341542572</p>
+              <p>JazzCash/Easypaisa: 03471504434</p>
               <p>Bank (HBL): 16817905812303</p>
               <p>Account Name: Quratulain Syed</p>
             </div>
@@ -1097,7 +1097,16 @@ export const emailTemplates = {
       ? `🔥 بڑی سیل! ${sale.name} - ${sale.discountPercentage}% رعایت! 🔥`
       : `🔥 Big Sale! ${sale.name} - ${sale.discountPercentage}% OFF! 🔥`;
 
-    const productsHtml = products.slice(0, 6).map(product => `
+    // Filter out deleted/invalid products
+    const validProducts = (products || []).filter(product =>
+      product &&
+      product._id &&
+      product.price &&
+      (product.name?.en || product.name) &&
+      product.isActive !== false
+    );
+
+    const productsHtml = validProducts.slice(0, 6).map(product => `
       <div style="display: inline-block; width: 45%; margin: 10px 2%; vertical-align: top; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <img src="${product.images?.[0]?.url || ''}" alt="${product.name?.en || product.name}" style="width: 100%; height: 150px; object-fit: cover;" />
         <div style="padding: 10px;">

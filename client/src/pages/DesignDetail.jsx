@@ -72,7 +72,7 @@ const PaymentAccounts = ({ t }) => (
         </div>
         <button
           onClick={() => {
-            navigator.clipboard.writeText('03341542572');
+            navigator.clipboard.writeText('03471504434');
             toast.success('Copied!');
           }}
           className="text-green-600 hover:text-green-700 text-xs"
@@ -87,7 +87,7 @@ const PaymentAccounts = ({ t }) => (
         </div>
         <button
           onClick={() => {
-            navigator.clipboard.writeText('03341542572');
+            navigator.clipboard.writeText('03471504434');
             toast.success('Copied!');
           }}
           className="text-blue-600 hover:text-blue-700 text-xs"

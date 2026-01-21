@@ -8,7 +8,6 @@ import {
   FiUsers,
   FiDollarSign,
   FiTrendingUp,
-  FiAlertCircle,
   FiEdit3
 } from 'react-icons/fi';
 import {
@@ -205,34 +204,6 @@ const Dashboard = () => {
 
           {/* Alerts & Actions */}
           <div className="space-y-6">
-            {/* Low Stock Alert */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                  <FiAlertCircle className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <h2 className="font-heading font-semibold text-gray-900">
-                    {t('admin.lowStockAlert')}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {dashboard?.lowStockProducts?.length || 0} {t('admin.productsLowStock')}
-                  </p>
-                </div>
-              </div>
-              {(dashboard?.lowStockProducts || []).slice(0, 3).map((product) => (
-                <div key={product._id} className="flex items-center justify-between py-2">
-                  <span className="text-gray-700">{product.name?.en}</span>
-                  <span className="text-red-600 font-medium">{product.stock} left</span>
-                </div>
-              ))}
-              {(dashboard?.lowStockProducts?.length || 0) > 3 && (
-                <Link to="/admin/products?filter=low-stock" className="text-primary-600 text-sm font-medium mt-2 block">
-                  {t('common.viewAll')}
-                </Link>
-              )}
-            </div>
-
             {/* Pending Custom Designs */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center gap-3 mb-4">

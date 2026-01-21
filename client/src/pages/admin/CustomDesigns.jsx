@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,21 @@ import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { PageLoader } from '../../components/common/Loader';
 import { getImageUrl } from '../../utils/imageUrl';
+
+// Debounce hook
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -27,9 +42,21 @@ const CustomDesigns = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // Debounce search input by 500ms
+  const debouncedSearch = useDebounce(search, 500);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-custom-designs', page, search, statusFilter],
-    queryFn: () => managementAPI.getCustomDesigns({ page, search, status: statusFilter !== 'all' ? statusFilter : undefined })
+    queryKey: ['admin-custom-designs', page, debouncedSearch, statusFilter],
+    queryFn: () => managementAPI.getCustomDesigns({
+      page,
+      search: debouncedSearch || undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined
+    })
   });
 
   const updateMutation = useMutation({

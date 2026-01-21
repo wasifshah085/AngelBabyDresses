@@ -56,12 +56,12 @@ export const getProductReviews = async (req, res) => {
   }
 };
 
-// @desc    Create review
+// @desc    Create review (only after order delivered)
 // @route   POST /api/reviews
 // @access  Private
 export const createReview = async (req, res) => {
   try {
-    const { productId, rating, title, comment } = req.body;
+    const { productId, orderId, rating, title, comment } = req.body;
 
     // Check if product exists
     const product = await Product.findById(productId);
@@ -85,20 +85,62 @@ export const createReview = async (req, res) => {
       });
     }
 
-    // Check if user has purchased this product
-    const hasPurchased = await Order.findOne({
+    // Check if user has received this product (order must be delivered)
+    const deliveredOrder = await Order.findOne({
+      _id: orderId,
       user: req.user._id,
-      'items.product': productId,
       status: 'delivered'
     });
+
+    if (!deliveredOrder) {
+      return res.status(400).json({
+        success: false,
+        message: 'You can only review products after delivery'
+      });
+    }
+
+    // Verify the product was in this order
+    const productInOrder = deliveredOrder.items.some(item =>
+      item.product?.toString() === productId ||
+      item.name?.toLowerCase().includes(product.name?.en?.toLowerCase() || '')
+    );
+
+    if (!productInOrder) {
+      return res.status(400).json({
+        success: false,
+        message: 'This product was not in your order'
+      });
+    }
+
+    // Handle image uploads
+    let reviewImages = [];
+    if (req.files && req.files.length > 0) {
+      const { cloudinary } = await import('../config/cloudinary.js');
+
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          {
+            folder: 'angel-baby-dresses/reviews',
+            transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }]
+          }
+        );
+        reviewImages.push({
+          url: result.secure_url,
+          publicId: result.public_id
+        });
+      }
+    }
 
     const review = await Review.create({
       user: req.user._id,
       product: productId,
+      order: orderId,
       rating,
       title,
       comment,
-      isVerifiedPurchase: !!hasPurchased
+      images: reviewImages,
+      isVerifiedPurchase: true // Always true since we verified delivery
     });
 
     await review.populate('user', 'name');

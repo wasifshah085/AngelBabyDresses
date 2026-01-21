@@ -309,8 +309,8 @@ const AdminOrderDetail = () => {
           </span>
         </div>
 
-        {/* Payment Review Section */}
-        {(order.advancePayment?.status === 'submitted' || order.finalPayment?.status === 'submitted') && (
+        {/* Advance Payment Review Section */}
+        {order.advancePayment?.status === 'submitted' && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
             <h3 className="font-heading font-semibold text-yellow-800 mb-4 flex items-center gap-2">
               <FiClock className="w-5 h-5" />
@@ -318,110 +318,55 @@ const AdminOrderDetail = () => {
             </h3>
 
             {/* Advance Payment Review */}
-            {order.advancePayment?.status === 'submitted' && (
-              <div className="bg-white rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium">Advance Payment (50%)</h4>
-                  <span className="text-lg font-semibold text-primary-600">
-                    Rs. {order.advancePayment.amount?.toLocaleString()}
-                  </span>
-                </div>
-                {order.advancePayment.screenshot?.url && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-2">Payment Screenshot:</p>
-                    <a
-                      href={order.advancePayment.screenshot.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block"
-                    >
-                      <img
-                        src={order.advancePayment.screenshot.url}
-                        alt="Payment proof"
-                        className="max-h-48 rounded-lg border hover:opacity-80"
-                      />
-                    </a>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Submitted: {new Date(order.advancePayment.submittedAt).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => approveAdvanceMutation.mutate()}
-                    disabled={approveAdvanceMutation.isPending}
-                    className="btn bg-green-500 text-white hover:bg-green-600 flex-1"
-                  >
-                    {approveAdvanceMutation.isPending ? <Loader size="sm" /> : (
-                      <>
-                        <FiCheck className="w-4 h-4 mr-2" />
-                        Approve
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal('advance')}
-                    className="btn bg-red-500 text-white hover:bg-red-600 flex-1"
-                  >
-                    <FiX className="w-4 h-4 mr-2" />
-                    Reject
-                  </button>
-                </div>
+            <div className="bg-white rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium">Advance Payment (50%)</h4>
+                <span className="text-lg font-semibold text-primary-600">
+                  Rs. {order.advancePayment.amount?.toLocaleString()}
+                </span>
               </div>
-            )}
-
-            {/* Final Payment Review */}
-            {order.finalPayment?.status === 'submitted' && (
-              <div className="bg-white rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium">Final Payment (50%)</h4>
-                  <span className="text-lg font-semibold text-primary-600">
-                    Rs. {order.finalPayment.amount?.toLocaleString()}
-                  </span>
-                </div>
-                {order.finalPayment.screenshot?.url && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-2">Payment Screenshot:</p>
-                    <a
-                      href={order.finalPayment.screenshot.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block"
-                    >
-                      <img
-                        src={order.finalPayment.screenshot.url}
-                        alt="Payment proof"
-                        className="max-h-48 rounded-lg border hover:opacity-80"
-                      />
-                    </a>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Submitted: {new Date(order.finalPayment.submittedAt).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => approveFinalMutation.mutate()}
-                    disabled={approveFinalMutation.isPending}
-                    className="btn bg-green-500 text-white hover:bg-green-600 flex-1"
+              {order.advancePayment.screenshot?.url && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-500 mb-2">Payment Screenshot:</p>
+                  <a
+                    href={order.advancePayment.screenshot.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block"
                   >
-                    {approveFinalMutation.isPending ? <Loader size="sm" /> : (
-                      <>
-                        <FiCheck className="w-4 h-4 mr-2" />
-                        Approve
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal('final')}
-                    className="btn bg-red-500 text-white hover:bg-red-600 flex-1"
-                  >
-                    <FiX className="w-4 h-4 mr-2" />
-                    Reject
-                  </button>
+                    <img
+                      src={order.advancePayment.screenshot.url}
+                      alt="Payment proof"
+                      className="max-h-48 rounded-lg border hover:opacity-80"
+                    />
+                  </a>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Submitted: {new Date(order.advancePayment.submittedAt).toLocaleString()}
+                  </p>
                 </div>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => approveAdvanceMutation.mutate()}
+                  disabled={approveAdvanceMutation.isPending}
+                  className="btn bg-green-500 text-white hover:bg-green-600 flex-1"
+                >
+                  {approveAdvanceMutation.isPending ? <Loader size="sm" /> : (
+                    <>
+                      <FiCheck className="w-4 h-4 mr-2" />
+                      Approve
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowRejectModal('advance')}
+                  className="btn bg-red-500 text-white hover:bg-red-600 flex-1"
+                >
+                  <FiX className="w-4 h-4 mr-2" />
+                  Reject
+                </button>
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -570,18 +515,11 @@ const AdminOrderDetail = () => {
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 text-sm">{t('checkout.finalPayment') || 'Final (50%)'}</span>
+                  <span className="text-gray-600 text-sm">{t('checkout.finalPayment') || 'Final + Shipping'}</span>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">Rs. {order.finalPayment?.amount?.toLocaleString()}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      order.finalPayment?.status === 'approved' ? 'bg-green-100 text-green-700' :
-                      order.finalPayment?.status === 'submitted' ? 'bg-yellow-100 text-yellow-700' :
-                      order.finalPayment?.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {order.finalPayment?.status === 'approved' ? t('orders.paid') || 'Paid' :
-                       order.finalPayment?.status === 'submitted' ? t('orders.verifying') || 'Verifying' :
-                       order.finalPayment?.status === 'rejected' ? t('orders.rejected') || 'Rejected' : t('orders.pending') || 'Pending'}
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      COD
                     </span>
                   </div>
                 </div>

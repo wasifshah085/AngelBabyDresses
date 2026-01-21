@@ -27,7 +27,10 @@
       "Bash(pm2 delete:*)",
       "Bash(pm2 start:*)",
       "Bash(pm2 list:*)",
-      "Bash(pm2 restart:*)"
+      "Bash(pm2 restart:*)",
+      "Bash(pm2 show:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)"
     ]
   }
 }

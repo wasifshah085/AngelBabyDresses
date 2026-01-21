@@ -3,9 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { FiPackage, FiMapPin, FiCreditCard, FiTruck, FiCheck, FiX, FiArrowLeft, FiUpload, FiClock, FiAlertCircle } from 'react-icons/fi';
+import { FiPackage, FiMapPin, FiCreditCard, FiTruck, FiCheck, FiX, FiArrowLeft, FiUpload, FiClock, FiAlertCircle, FiStar, FiImage } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { ordersAPI } from '../services/api';
+import { ordersAPI, reviewsAPI } from '../services/api';
 import { useLanguageStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
 import Loader from '../components/common/Loader';
@@ -32,6 +32,266 @@ const paymentStatusColors = {
 };
 
 const statusSteps = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'];
+
+// Star Rating Component
+const StarRating = ({ rating, setRating, readonly = false }) => {
+  const [hoverRating, setHoverRating] = useState(0);
+
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          disabled={readonly}
+          onClick={() => !readonly && setRating(star)}
+          onMouseEnter={() => !readonly && setHoverRating(star)}
+          onMouseLeave={() => !readonly && setHoverRating(0)}
+          className={`${readonly ? '' : 'cursor-pointer'} transition-colors`}
+        >
+          <FiStar
+            className={`w-6 h-6 ${
+              (hoverRating || rating) >= star
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-gray-300'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// Review Section Component
+const ReviewSection = ({ order, t }) => {
+  const queryClient = useQueryClient();
+  const [reviewItem, setReviewItem] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [title, setTitle] = useState('');
+  const [images, setImages] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const imageInputRef = useRef(null);
+
+  const reviewMutation = useMutation({
+    mutationFn: (formData) => reviewsAPI.create(formData),
+    onSuccess: () => {
+      toast.success(t('reviews.submitted', { defaultValue: 'Review submitted successfully!' }));
+      setReviewItem(null);
+      setRating(5);
+      setComment('');
+      setTitle('');
+      setImages([]);
+      queryClient.invalidateQueries(['order', order._id]);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to submit review');
+      setSubmitting(false);
+    }
+  });
+
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (images.length + files.length > 3) {
+      toast.error('Maximum 3 images allowed');
+      return;
+    }
+
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 5MB)`);
+        return false;
+      }
+      return true;
+    });
+
+    setImages(prev => [...prev, ...validFiles]);
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitReview = () => {
+    if (!comment.trim()) {
+      toast.error('Please write a comment');
+      return;
+    }
+
+    setSubmitting(true);
+
+    const formData = new FormData();
+    formData.append('productId', reviewItem.product?._id || reviewItem.product);
+    formData.append('orderId', order._id);
+    formData.append('rating', rating);
+    formData.append('title', title);
+    formData.append('comment', comment);
+
+    images.forEach(img => {
+      formData.append('images', img);
+    });
+
+    reviewMutation.mutate(formData);
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <h2 className="font-heading font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <FiStar className="w-5 h-5 text-primary-500" />
+        {t('reviews.leaveReview', { defaultValue: 'Leave a Review' })}
+      </h2>
+
+      {!reviewItem ? (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            {t('reviews.selectProduct', { defaultValue: 'Select a product to review:' })}
+          </p>
+          {order.items?.map((item, index) => (
+            <button
+              key={index}
+              onClick={() => setReviewItem(item)}
+              className="w-full flex items-center gap-3 p-3 border rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors text-left"
+            >
+              <img
+                src={getImageUrl(item.product?.images?.[0]?.url || item.image)}
+                alt={item.name}
+                className="w-12 h-12 object-cover rounded"
+              />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{item.name}</p>
+                <p className="text-xs text-gray-500">{t('reviews.tapToReview', { defaultValue: 'Tap to write a review' })}</p>
+              </div>
+              <FiStar className="w-5 h-5 text-gray-400" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Selected Product */}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <img
+              src={getImageUrl(reviewItem.product?.images?.[0]?.url || reviewItem.image)}
+              alt={reviewItem.name}
+              className="w-12 h-12 object-cover rounded"
+            />
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">{reviewItem.name}</p>
+            </div>
+            <button
+              onClick={() => setReviewItem(null)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Rating */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('reviews.rating', { defaultValue: 'Rating' })}
+            </label>
+            <StarRating rating={rating} setRating={setRating} />
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('reviews.title', { defaultValue: 'Title (optional)' })}
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('reviews.titlePlaceholder', { defaultValue: 'Summarize your experience' })}
+              className="input"
+              maxLength={100}
+            />
+          </div>
+
+          {/* Comment */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('reviews.comment', { defaultValue: 'Your Review' })} *
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={t('reviews.commentPlaceholder', { defaultValue: 'What did you like or dislike?' })}
+              className="input min-h-[100px]"
+              maxLength={1000}
+              required
+            />
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('reviews.addPhotos', { defaultValue: 'Add Photos (optional)' })}
+            </label>
+            <input
+              type="file"
+              ref={imageInputRef}
+              onChange={handleImageSelect}
+              accept="image/*"
+              multiple
+              className="hidden"
+            />
+            <div className="flex flex-wrap gap-2">
+              {images.map((img, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={URL.createObjectURL(img)}
+                    alt={`Preview ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg"
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"
+                  >
+                    <FiX className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {images.length < 3 && (
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-primary-500 hover:text-primary-500"
+                >
+                  <FiImage className="w-6 h-6" />
+                  <span className="text-xs mt-1">Add</span>
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {t('reviews.maxImages', { defaultValue: 'Up to 3 images, 5MB each' })}
+            </p>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setReviewItem(null)}
+              className="btn btn-outline flex-1"
+            >
+              {t('common.cancel', { defaultValue: 'Cancel' })}
+            </button>
+            <button
+              onClick={handleSubmitReview}
+              disabled={submitting || !comment.trim()}
+              className="btn btn-primary flex-1"
+            >
+              {submitting ? <Loader size="sm" /> : t('reviews.submit', { defaultValue: 'Submit Review' })}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -141,10 +401,10 @@ const OrderDetail = () => {
   // Determine which payment is needed
   const needsAdvancePayment = order.paymentStatus === 'pending_advance' ||
     (order.advancePayment?.status === 'rejected');
-  const needsFinalPayment = order.paymentStatus === 'pending_final' ||
-    (order.finalPayment?.status === 'rejected');
+  // Final payment is always COD - no online payment upload needed
+  const needsFinalPayment = false;
   const awaitingAdvanceApproval = order.advancePayment?.status === 'submitted';
-  const awaitingFinalApproval = order.finalPayment?.status === 'submitted';
+  const awaitingFinalApproval = false; // Final payment is COD only
 
   return (
     <>
@@ -220,12 +480,12 @@ const OrderDetail = () => {
                   <div className="grid sm:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">EasyPaisa</p>
-                      <p className="font-mono font-medium">03341542572</p>
+                      <p className="font-mono font-medium">03471504434</p>
                       <p className="text-gray-500 text-xs">Quratulain Syed</p>
                     </div>
                     <div>
                       <p className="text-gray-500">JazzCash</p>
-                      <p className="font-mono font-medium">03341542572</p>
+                      <p className="font-mono font-medium">03471504434</p>
                       <p className="text-gray-500 text-xs">Quratulain Syed</p>
                     </div>
                     <div>
@@ -385,6 +645,11 @@ const OrderDetail = () => {
                 <p>{order.shippingAddress?.phone}</p>
               </div>
             </div>
+
+            {/* Review Section - Only show for delivered orders */}
+            {order.status === 'delivered' && (
+              <ReviewSection order={order} t={t} />
+            )}
           </div>
 
           {/* Order Summary */}

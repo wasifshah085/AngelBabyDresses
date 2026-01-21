@@ -87,15 +87,67 @@ export const getDashboardStats = async (req, res) => {
     const todayOrders = await Order.countDocuments({ createdAt: { $gte: today } });
     const pendingOrders = await Order.countDocuments({ status: 'pending' });
 
-    // Revenue stats
+    // Revenue stats - Simple approach: sum all approved advance payments
+    // Revenue = all approved advance payments + COD collected amounts
     const totalRevenue = await Order.aggregate([
-      { $match: { paymentStatus: 'paid' } },
-      { $group: { _id: null, total: { $sum: '$total' } } }
+      {
+        $match: {
+          'advancePayment.status': 'approved'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          // Sum all approved advance payments
+          advanceTotal: { $sum: { $ifNull: ['$advancePayment.amount', 0] } },
+          // Sum COD collected amounts (for delivered orders)
+          codTotal: {
+            $sum: {
+              $cond: [
+                { $eq: ['$finalPayment.status', 'cod_collected'] },
+                { $ifNull: ['$finalPayment.amount', 0] },
+                0
+              ]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          total: { $add: [{ $ifNull: ['$advanceTotal', 0] }, { $ifNull: ['$codTotal', 0] }] }
+        }
+      }
     ]);
 
     const monthlyRevenue = await Order.aggregate([
-      { $match: { paymentStatus: 'paid', createdAt: { $gte: thisMonth } } },
-      { $group: { _id: null, total: { $sum: '$total' } } }
+      {
+        $match: {
+          createdAt: { $gte: thisMonth },
+          'advancePayment.status': 'approved'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          advanceTotal: { $sum: { $ifNull: ['$advancePayment.amount', 0] } },
+          codTotal: {
+            $sum: {
+              $cond: [
+                { $eq: ['$finalPayment.status', 'cod_collected'] },
+                { $ifNull: ['$finalPayment.amount', 0] },
+                0
+              ]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          total: { $add: [{ $ifNull: ['$advanceTotal', 0] }, { $ifNull: ['$codTotal', 0] }] }
+        }
+      }
     ]);
 
     // Product stats
@@ -119,22 +171,40 @@ export const getDashboardStats = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10);
 
-    // Sales chart data (last 7 days)
-    const salesChart = await Order.aggregate([
+    // Sales chart data (last 7 days) - count all orders with approved advance payments
+    const salesChartRaw = await Order.aggregate([
       {
         $match: {
           createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-          paymentStatus: 'paid'
+          'advancePayment.status': 'approved'
         }
       },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          revenue: { $sum: '$total' },
+          revenue: { $sum: { $ifNull: ['$advancePayment.amount', 0] } },
           orders: { $sum: 1 }
         }
       },
       { $sort: { _id: 1 } }
+    ]);
+
+    // Transform to match frontend expected format (date field instead of _id)
+    const revenueChart = salesChartRaw.map(item => ({
+      date: item._id,
+      revenue: item.revenue,
+      orders: item.orders
+    }));
+
+    // Orders by status for pie chart
+    const ordersByStatus = await Order.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
     ]);
 
     res.json({
@@ -162,7 +232,8 @@ export const getDashboardStats = async (req, res) => {
           pending: pendingDesigns
         },
         recentOrders,
-        salesChart
+        revenueChart,
+        ordersByStatus
       }
     });
   } catch (error) {
@@ -1043,7 +1114,7 @@ export const rejectAdvancePayment = async (req, res) => {
     // Send WhatsApp notification
     if (order.shippingAddress?.phone) {
       try {
-        const message = `❌ *Payment Rejected*\n\nYour advance payment for order #${order.orderNumber} was not verified.\n\nReason: ${reason || 'Payment could not be verified'}\n\nPlease submit a new payment screenshot.\n\n💳 Accounts:\nJazzCash/Easypaisa: 03341542572\nHBL: 16817905812303\nName: Quratulain Syed\n\n🎀 Angel Baby Dresses`;
+        const message = `❌ *Payment Rejected*\n\nYour advance payment for order #${order.orderNumber} was not verified.\n\nReason: ${reason || 'Payment could not be verified'}\n\nPlease submit a new payment screenshot.\n\n💳 Accounts:\nJazzCash/Easypaisa: 03471504434\nHBL: 16817905812303\nName: Quratulain Syed\n\n🎀 Angel Baby Dresses`;
         sendWhatsAppMessage(order.shippingAddress.phone, message);
       } catch (e) {
         console.error('WhatsApp error:', e.message);
@@ -1413,10 +1484,52 @@ export const markCodCollected = async (req, res) => {
 export const getCustomDesigns = async (req, res) => {
   try {
     const { page, limit, skip } = paginate(req.query.page, req.query.limit);
-    const { status } = req.query;
+    const { status, search } = req.query;
 
-    const query = {};
-    if (status) query.status = status;
+    let query = {};
+
+    // Build search conditions
+    let searchConditions = null;
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+
+      // First, find users that match the search
+      const matchingUsers = await User.find({
+        $or: [
+          { name: searchRegex },
+          { email: searchRegex },
+          { phone: searchRegex }
+        ]
+      }).select('_id');
+
+      const userIds = matchingUsers.map(u => u._id);
+
+      // Build search conditions
+      const orConditions = [
+        { designNumber: searchRegex },
+        { description: searchRegex },
+        { productType: searchRegex },
+        { additionalNotes: searchRegex },
+        { 'customerContact.whatsapp': searchRegex },
+        { 'customerContact.phone': searchRegex }
+      ];
+
+      // Add user filter if we found matching users
+      if (userIds.length > 0) {
+        orConditions.push({ user: { $in: userIds } });
+      }
+
+      searchConditions = { $or: orConditions };
+    }
+
+    // Build final query using $and to properly combine status and search
+    if (status && searchConditions) {
+      query = { $and: [{ status }, searchConditions] };
+    } else if (status) {
+      query = { status };
+    } else if (searchConditions) {
+      query = searchConditions;
+    }
 
     const total = await CustomDesign.countDocuments(query);
     const designs = await CustomDesign.find(query)
