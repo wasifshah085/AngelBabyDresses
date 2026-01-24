@@ -54,39 +54,34 @@ const Header = () => {
       {/* Top Bar */}
       <div className="bg-primary-500 text-white text-center py-2 text-sm overflow-hidden">
         <div className="marquee">
-          <p>50% of payment will be charged on order and other 50% when the order is completed</p>
+          <p>Standard delivery time 2 to 3 weeks</p>
         </div>
       </div>
 
       {/* Main Header */}
       <div className="container">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-16 lg:h-20 gap-2">
           {/* Mobile Menu Button */}
           <button
             onClick={openMobileMenu}
-            className="lg:hidden p-2 text-gray-600 hover:text-primary-500"
+            className="lg:hidden p-2 text-gray-600 hover:text-primary-500 flex-shrink-0"
             aria-label="Open menu"
           >
             <FiMenu className="w-6 h-6" />
           </button>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {settings?.logo?.url ? (
               <img
                 src={getImageUrl(settings.logo.url)}
                 alt={settings.siteName?.[language] || settings.siteName?.en || 'Angel Baby Dresses'}
-                className="h-10 lg:h-12 w-auto object-contain"
+                className="h-8 sm:h-10 lg:h-12 w-auto object-contain flex-shrink-0"
               />
             ) : null}
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl lg:text-2xl font-heading font-bold text-primary-500">
-                {settings?.siteName?.[language] || settings?.siteName?.en || 'Angel Baby'}
-              </span>
-              <span className="hidden sm:inline text-base lg:text-lg font-heading text-gray-600">
-                {!settings?.siteName ? 'Dresses' : ''}
-              </span>
-            </div>
+            <span className="text-sm sm:text-xl lg:text-2xl font-heading font-bold text-primary-500 whitespace-nowrap">
+              {settings?.siteName?.[language] || settings?.siteName?.en || 'Angel Baby'}
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -105,7 +100,7 @@ const Header = () => {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
             {/* Language Toggle */}
             <button
               onClick={toggleLanguage}

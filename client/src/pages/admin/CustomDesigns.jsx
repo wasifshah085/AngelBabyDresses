@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,21 +8,7 @@ import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { PageLoader } from '../../components/common/Loader';
 import { getImageUrl } from '../../utils/imageUrl';
-
-// Debounce hook
-const useDebounce = (value, delay) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
-};
+import { useDebounce } from '../../hooks/useDebounce';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -50,13 +36,14 @@ const CustomDesigns = () => {
     setPage(1);
   }, [debouncedSearch, statusFilter]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['admin-custom-designs', page, debouncedSearch, statusFilter],
     queryFn: () => managementAPI.getCustomDesigns({
       page,
       search: debouncedSearch || undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined
-    })
+    }),
+    placeholderData: (previousData) => previousData
   });
 
   const updateMutation = useMutation({
@@ -73,7 +60,8 @@ const CustomDesigns = () => {
   const designs = data?.data?.data || [];
   const pagination = data?.data?.pagination || {};
 
-  if (isLoading) return <PageLoader />;
+  // Only show full page loader on initial load (no data yet)
+  if (isLoading && !data) return <PageLoader />;
 
   return (
     <>
@@ -98,6 +86,11 @@ const CustomDesigns = () => {
                 onChange={(e) => setSearch(e.target.value)}
                 className="input pl-10"
               />
+              {isFetching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <FiFilter className="w-5 h-5 text-gray-400" />

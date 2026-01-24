@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const addressSchema = new mongoose.Schema({
   title: {
@@ -91,11 +92,18 @@ const userSchema = new mongoose.Schema({
 
 // Encrypt password before saving
 userSchema.pre('save', async function(next) {
+  // Only hash password if it was modified (or is new)
   if (!this.isModified('password')) {
-    next();
+    return next(); // CRITICAL: Must return to prevent further execution
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+
+  // Only hash if password exists and is not already hashed
+  if (this.password && !this.password.startsWith('$2a$')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+
+  next();
 });
 
 // Match password

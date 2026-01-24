@@ -357,9 +357,9 @@
   },
   "auth": {
     "loginTitle": "Welcome Back",
-    "loginSubtitle": "Sign in to your account",
-    "registerTitle": "Create Account",
-    "registerSubtitle": "Join us and start shopping",
+    "loginSubtitle": "Sign in to continue shopping for your little angels",
+    "registerTitle": "Join Our Family",
+    "registerSubtitle": "Create an account to start shopping beautiful outfits for your kids",
     "email": "Email",
     "password": "Password",
     "name": "Full Name",
@@ -369,10 +369,17 @@
     "haveAccount": "Already have an account?",
     "signUp": "Sign Up",
     "signIn": "Sign In",
-    "resetPassword": "Reset Password",
-    "resetPasswordDesc": "Enter your email and we'll send you a reset link",
+    "resetPassword": "Set New Password",
+    "resetPasswordDesc": "Create a new password for your Angel Baby Dresses account",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "passwordResetSuccess": "Password reset successful! You can now login.",
     "sendResetLink": "Send Reset Link",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "forgotPasswordDesc": "Enter your email and we'll send you a link to reset your password",
+    "checkEmail": "Check Your Email",
+    "resetEmailSent": "We've sent a password reset link to your email. Please check your inbox and click the link to reset your password.",
+    "rememberPassword": "Remember your password?"
   },
   "footer": {
     "aboutUs": "About Us",

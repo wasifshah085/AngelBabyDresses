@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { FiFacebook, FiInstagram } from 'react-icons/fi';
-import { FaTiktok, FaWhatsapp } from 'react-icons/fa';
+import { FiFacebook, FiInstagram, FiMail } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 import { settingsAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
 import { getImageUrl } from '../../utils/imageUrl';
@@ -30,7 +30,6 @@ const Footer = () => {
   const socialLinks = [
     { name: 'Facebook', icon: FiFacebook, href: 'https://www.facebook.com/share/17kYD7ba11/' },
     { name: 'Instagram', icon: FiInstagram, href: 'https://www.instagram.com/angelbabydresses_official?igsh=MWlnM3VidGJtaHMzeA==' },
-    { name: 'TikTok', icon: FaTiktok, href: '#' },
     { name: 'WhatsApp', icon: FaWhatsapp, href: 'https://wa.me/923341542572' }
   ];
 
@@ -61,6 +60,32 @@ const Footer = () => {
                 {t('home.subscribe')}
               </button>
             </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Brand Story Section */}
+      <div className="bg-gray-800">
+        <div className="container py-8 lg:py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 text-center md:text-left">
+            <div>
+              <h4 className="text-base font-heading font-semibold text-primary-400 mb-2">Our Story</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                At Angel Baby Dresses, we believe every little girl deserves to feel like an angel. What began as a passion for fine fabrics and detailed craftsmanship has grown into a boutique creating elegant, one-of-a-kind dresses for life's most precious moments.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-base font-heading font-semibold text-primary-400 mb-2">Our Craft</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                We specialize in custom made dresses, handcrafted with care using soft linings, delicate lace, and hand finished details. Each piece is tailored to your child and your occasion.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-base font-heading font-semibold text-primary-400 mb-2">Our Promise</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                We create more than dresses, we create memories. Our promise is timeless elegance, comfort, and a magical experience for every Angel Baby.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -128,28 +153,25 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <a href={`mailto:${settings?.contact?.email || 'info@angelbabydresses.com'}`} className="hover:text-primary-400 transition-colors">
-                  {settings?.contact?.email || 'info@angelbabydresses.com'}
+                <a
+                  href="mailto:angelbabydressesofficial@gmail.com"
+                  className="inline-flex items-center gap-2 hover:text-primary-400 transition-colors"
+                >
+                  <FiMail className="w-5 h-5" />
+                  angelbabydressesofficial@gmail.com
                 </a>
               </li>
               <li>
-                <a href={`tel:${settings?.contact?.phone || '+923341542572'}`} className="hover:text-primary-400 transition-colors">
-                  {settings?.contact?.phone || '+92 334 1542572'}
+                <a
+                  href="https://wa.me/923341542572"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors"
+                >
+                  <FaWhatsapp className="w-5 h-5" />
+                  0334-1542572
                 </a>
               </li>
-              {(settings?.contact?.whatsapp || true) && (
-                <li>
-                  <a
-                    href={`https://wa.me/${settings?.contact?.whatsapp || '923341542572'}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors"
-                  >
-                    <FaWhatsapp className="w-5 h-5" />
-                    WhatsApp: 0334-1542572
-                  </a>
-                </li>
-              )}
             </ul>
           </div>
         </div>

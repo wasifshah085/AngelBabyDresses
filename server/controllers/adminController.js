@@ -471,6 +471,12 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    // Handle empty SKU - need to unset it so sparse index works correctly
+    const shouldUnsetSku = updateData.sku === '' || updateData.sku === null;
+    if (shouldUnsetSku) {
+      delete updateData.sku;
+    }
+
     // Handle removed images
     if (updateData.removedImages) {
       try {
@@ -491,9 +497,15 @@ export const updateProduct = async (req, res) => {
       delete updateData.removedImages;
     }
 
+    // Build the update operation
+    const updateOperation = { $set: updateData };
+    if (shouldUnsetSku) {
+      updateOperation.$unset = { sku: 1 };
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      updateOperation,
       { new: true, runValidators: true }
     ).populate('category', 'name');
 
@@ -1719,9 +1731,31 @@ export const getCustomers = async (req, res) => {
     const customersWithStats = await Promise.all(
       customers.map(async (customer) => {
         const orderCount = await Order.countDocuments({ user: customer._id });
+        // Calculate total spent from delivered orders OR orders with approved advance payment
         const totalSpent = await Order.aggregate([
-          { $match: { user: customer._id, paymentStatus: 'paid' } },
-          { $group: { _id: null, total: { $sum: '$total' } } }
+          {
+            $match: {
+              user: customer._id,
+              $or: [
+                { status: 'delivered' },
+                { 'advancePayment.status': 'approved' }
+              ]
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$status', 'delivered'] },
+                    '$total', // For delivered orders, count full total
+                    '$advancePayment.amount' // For non-delivered but approved, count advance only
+                  ]
+                }
+              }
+            }
+          }
         ]);
 
         return {

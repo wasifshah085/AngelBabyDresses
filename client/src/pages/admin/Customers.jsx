@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -6,6 +6,7 @@ import { FiSearch, FiMail, FiPhone, FiShoppingBag, FiCalendar } from 'react-icon
 import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
 import { PageLoader } from '../../components/common/Loader';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const Customers = () => {
   const { t } = useTranslation();
@@ -14,15 +15,25 @@ const Customers = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin-customers', page, search],
-    queryFn: () => managementAPI.getCustomers({ page, search })
+  // Debounce search to prevent excessive API calls
+  const debouncedSearch = useDebounce(search, 500);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['admin-customers', page, debouncedSearch],
+    queryFn: () => managementAPI.getCustomers({ page, search: debouncedSearch || undefined }),
+    placeholderData: (previousData) => previousData
   });
 
   const customers = data?.data?.data || [];
   const pagination = data?.data?.pagination || {};
 
-  if (isLoading) return <PageLoader />;
+  // Only show full page loader on initial load
+  if (isLoading && !data) return <PageLoader />;
 
   return (
     <>
@@ -44,8 +55,13 @@ const Customers = () => {
               placeholder={t('admin.searchCustomers')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pl-10"
+              className="input pl-10 pr-10"
             />
+            {isFetching && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { managementAPI } from '../../services/api';
 import { useLanguageStore } from '../../store/useStore';
 import { PageLoader } from '../../components/common/Loader';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -48,20 +49,30 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin-orders', page, search, statusFilter, paymentFilter],
+  // Debounce search to prevent excessive API calls
+  const debouncedSearch = useDebounce(search, 500);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, paymentFilter]);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['admin-orders', page, debouncedSearch, statusFilter, paymentFilter],
     queryFn: () => managementAPI.getOrders({
       page,
-      search,
+      search: debouncedSearch || undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined,
       paymentStatus: paymentFilter !== 'all' ? paymentFilter : undefined
-    })
+    }),
+    placeholderData: (previousData) => previousData
   });
 
   const orders = data?.data?.data || [];
   const pagination = data?.data?.pagination || {};
 
-  if (isLoading) return <PageLoader />;
+  // Only show full page loader on initial load
+  if (isLoading && !data) return <PageLoader />;
 
   return (
     <>
@@ -84,8 +95,13 @@ const Orders = () => {
                 placeholder={t('admin.searchOrders')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input pl-10"
+                className="input pl-10 pr-10"
               />
+              {isFetching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <FiFilter className="w-5 h-5 text-gray-400" />

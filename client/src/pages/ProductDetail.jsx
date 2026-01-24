@@ -5,9 +5,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode, Navigation, Thumbs } from 'swiper/modules';
-import { FiHeart, FiShoppingCart, FiShare2, FiStar, FiMinus, FiPlus, FiChevronRight, FiMaximize2 } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart, FiShare2, FiStar, FiMinus, FiPlus, FiChevronRight, FiMaximize2, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { productsAPI, reviewsAPI, authAPI, cartAPI } from '../services/api';
+import { productsAPI, reviewsAPI, authAPI, cartAPI, ordersAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore, useUIStore } from '../store/useStore';
 import { PageLoader } from '../components/common/Loader';
 import ProductCard from '../components/product/ProductCard';
@@ -43,6 +43,10 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState('');
 
   const { data: productData, isLoading } = useQuery({
     queryKey: ['product', slug],
@@ -68,8 +72,28 @@ const ProductDetail = () => {
     enabled: isAuthenticated
   });
 
+  // Fetch user's delivered orders to check if they can review
+  const { data: userOrdersData } = useQuery({
+    queryKey: ['user-orders-for-review', product?._id],
+    queryFn: () => ordersAPI.getMyOrders(),
+    enabled: isAuthenticated && !!product
+  });
+
   const wishlist = wishlistData?.data?.data || [];
   const isInWishlist = product && wishlist.some((item) => item._id === product._id);
+
+  // Get delivered orders containing this product that haven't been reviewed
+  const deliveredOrdersWithProduct = useMemo(() => {
+    if (!userOrdersData?.data?.data || !product) return [];
+    return userOrdersData.data.data.filter(order =>
+      order.status === 'delivered' &&
+      order.items.some(item =>
+        item.product === product._id ||
+        item.productId === product._id ||
+        item.name?.toLowerCase().includes(product.name?.en?.toLowerCase() || '')
+      )
+    );
+  }, [userOrdersData, product]);
 
   const wishlistMutation = useMutation({
     mutationFn: () => authAPI.toggleWishlist(product._id),
@@ -77,6 +101,28 @@ const ProductDetail = () => {
       queryClient.invalidateQueries(['wishlist']);
       queryClient.invalidateQueries(['product', slug]);
       toast.success(t('messages.wishlistUpdated'));
+    }
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: (data) => {
+      const formData = new FormData();
+      formData.append('productId', data.productId);
+      formData.append('orderId', data.orderId);
+      formData.append('rating', data.rating);
+      formData.append('comment', data.comment);
+      return reviewsAPI.create(formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['reviews', slug]);
+      toast.success(t('messages.reviewSubmitted', { defaultValue: 'Review submitted successfully!' }));
+      setShowReviewModal(false);
+      setReviewRating(5);
+      setReviewComment('');
+      setSelectedOrderId('');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.error'));
     }
   });
 
@@ -94,6 +140,10 @@ const ProductDetail = () => {
 
   const reviews = reviewsData?.data?.data || [];
   const related = relatedProducts?.data?.data || [];
+
+  // Check if user has already reviewed this product
+  const hasReviewed = reviews.some(review => review.user?._id === user?._id);
+  const canReview = isAuthenticated && deliveredOrdersWithProduct.length > 0 && !hasReviewed;
 
   // Get available age ranges for this product
   const availableAges = useMemo(() => {
@@ -191,6 +241,39 @@ const ProductDetail = () => {
       return;
     }
     wishlistMutation.mutate();
+  };
+
+  const handleWriteReview = () => {
+    if (!isAuthenticated) {
+      toast.error(t('messages.loginRequired'));
+      return;
+    }
+    if (!canReview) {
+      if (hasReviewed) {
+        toast.error(t('messages.alreadyReviewed', { defaultValue: 'You have already reviewed this product' }));
+      } else {
+        toast.error(t('messages.purchaseRequired', { defaultValue: 'You can only review products you have purchased and received' }));
+      }
+      return;
+    }
+    setShowReviewModal(true);
+  };
+
+  const handleSubmitReview = () => {
+    if (!reviewComment.trim()) {
+      toast.error(t('validation.reviewRequired', { defaultValue: 'Please write a review' }));
+      return;
+    }
+    if (!selectedOrderId) {
+      toast.error(t('validation.selectOrder', { defaultValue: 'Please select an order' }));
+      return;
+    }
+    reviewMutation.mutate({
+      productId: product._id,
+      orderId: selectedOrderId,
+      rating: reviewRating,
+      comment: reviewComment
+    });
   };
 
   const averageRating = reviews.length > 0
@@ -449,7 +532,7 @@ const ProductDetail = () => {
         <div className="mt-16">
           <div className="border-b">
             <div className="flex gap-8">
-              {['description', 'reviews', 'shipping'].map((tab) => (
+              {['description', 'reviews'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -496,11 +579,13 @@ const ProductDetail = () => {
                   <h3 className="text-xl font-heading font-semibold">
                     {t('product.customerReviews')} ({reviews.length})
                   </h3>
-                  {isAuthenticated && (
-                    <button className="btn btn-outline">
-                      {t('product.writeReview')}
-                    </button>
-                  )}
+                  <button
+                    onClick={handleWriteReview}
+                    className={`btn ${canReview ? 'btn-primary' : 'btn-outline'}`}
+                    disabled={!isAuthenticated || hasReviewed}
+                  >
+                    {hasReviewed ? t('product.alreadyReviewed', { defaultValue: 'Already Reviewed' }) : t('product.writeReview')}
+                  </button>
                 </div>
 
                 {reviews.length === 0 ? (
@@ -538,16 +623,6 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {activeTab === 'shipping' && (
-              <div className="prose max-w-none">
-                <h4>{t('product.shippingInfo')}</h4>
-                <ul className="text-gray-600">
-                  <li>{t('product.freeShipping')}</li>
-                  <li>{t('product.deliveryTime')}</li>
-                  <li>{t('product.returnPolicy')}</li>
-                </ul>
-              </div>
-            )}
           </div>
         </div>
 
@@ -573,6 +648,101 @@ const ProductDetail = () => {
         isOpen={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
       />
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowReviewModal(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-heading font-semibold mb-4">
+              {t('product.writeReview', { defaultValue: 'Write a Review' })}
+            </h3>
+
+            {/* Select Order */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('product.selectOrder', { defaultValue: 'Select Order' })} *
+              </label>
+              <select
+                value={selectedOrderId}
+                onChange={(e) => setSelectedOrderId(e.target.value)}
+                className="input"
+              >
+                <option value="">{t('product.chooseOrder', { defaultValue: 'Choose an order...' })}</option>
+                {deliveredOrdersWithProduct.map((order) => (
+                  <option key={order._id} value={order._id}>
+                    {order.orderNumber} - {new Date(order.createdAt).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Rating */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('product.rating', { defaultValue: 'Rating' })} *
+              </label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-1"
+                  >
+                    <FiStar
+                      className={`w-8 h-8 ${
+                        star <= reviewRating
+                          ? 'text-yellow-400 fill-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Comment */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('product.yourReview', { defaultValue: 'Your Review' })} *
+              </label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                rows={4}
+                className="input resize-none"
+                placeholder={t('product.reviewPlaceholder', { defaultValue: 'Share your experience with this product...' })}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="btn btn-outline flex-1"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                disabled={reviewMutation.isPending}
+                className="btn btn-primary flex-1"
+              >
+                {reviewMutation.isPending
+                  ? t('common.submitting', { defaultValue: 'Submitting...' })
+                  : t('product.submitReview', { defaultValue: 'Submit Review' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

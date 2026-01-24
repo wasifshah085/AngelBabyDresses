@@ -47,18 +47,21 @@ const socialLinks = {
 // Common email footer with social links
 const getEmailFooter = (isUrdu = false) => `
   <div style="background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%); padding: 30px 20px; text-align: center; margin-top: 30px;">
-    <p style="color: white; margin: 0 0 15px 0; font-size: 16px; font-weight: bold;">
+    <p style="color: white; margin: 0 0 10px 0; font-size: 16px; font-weight: bold;">
       ${isUrdu ? 'ہم سے جڑے رہیں!' : 'Stay Connected With Us!'}
     </p>
+    <p style="color: white; margin: 0 0 15px 0; font-size: 14px;">
+      ${isUrdu ? 'مزید اپڈیٹس کے لیے ہمیں Instagram اور Facebook پر فالو کریں' : 'Follow us on Instagram & Facebook for more updates'}
+    </p>
     <div style="margin-bottom: 20px;">
-      <a href="${socialLinks.whatsappUrl}" style="display: inline-block; margin: 0 10px; text-decoration: none;">
-        <img src="https://cdn-icons-png.flaticon.com/32/733/733585.png" alt="WhatsApp" style="width: 32px; height: 32px;" />
-      </a>
       <a href="${socialLinks.instagram}" style="display: inline-block; margin: 0 10px; text-decoration: none;">
         <img src="https://cdn-icons-png.flaticon.com/32/2111/2111463.png" alt="Instagram" style="width: 32px; height: 32px;" />
       </a>
       <a href="${socialLinks.facebook}" style="display: inline-block; margin: 0 10px; text-decoration: none;">
         <img src="https://cdn-icons-png.flaticon.com/32/733/733547.png" alt="Facebook" style="width: 32px; height: 32px;" />
+      </a>
+      <a href="${socialLinks.whatsappUrl}" style="display: inline-block; margin: 0 10px; text-decoration: none;">
+        <img src="https://cdn-icons-png.flaticon.com/32/733/733585.png" alt="WhatsApp" style="width: 32px; height: 32px;" />
       </a>
     </div>
     <p style="color: white; margin: 0 0 5px 0; font-size: 14px;">
@@ -207,10 +210,7 @@ export const emailTemplates = {
                 : 'If you have any questions, please contact us.'}
             </p>
           </div>
-          <div class="footer">
-            <p>Angel Baby Dresses</p>
-            <p>Beautiful Clothes for Beautiful Kids</p>
-          </div>
+          ${getEmailFooter(isUrdu)}
         </div>
       </body>
       </html>
@@ -262,6 +262,7 @@ export const emailTemplates = {
               ? 'آپ کا آرڈر جلد آپ تک پہنچ جائے گا۔'
               : 'Your order is on its way and will arrive soon.'}</p>
           </div>
+          ${getEmailFooter(isUrdu)}
         </div>
       </body>
       </html>
@@ -301,9 +302,10 @@ export const emailTemplates = {
               : 'You requested a password reset. Click the button below to reset your password.'}</p>
             <a href="${resetUrl}" class="button">${isUrdu ? 'پاس ورڈ ری سیٹ کریں' : 'Reset Password'}</a>
             <p style="color: #666; font-size: 12px;">${isUrdu
-              ? 'یہ لنک 10 منٹ بعد ختم ہو جائے گا۔'
-              : 'This link will expire in 10 minutes.'}</p>
+              ? 'یہ لنک 30 منٹ بعد ختم ہو جائے گا۔'
+              : 'This link will expire in 30 minutes.'}</p>
           </div>
+          ${getEmailFooter(isUrdu)}
         </div>
       </body>
       </html>
@@ -358,6 +360,7 @@ export const emailTemplates = {
               ? 'براہ کرم اپنے اکاؤنٹ میں لاگ ان کر کے آرڈر کی تصدیق کریں۔'
               : 'Please log in to your account to confirm and place the order.'}</p>
           </div>
+          ${getEmailFooter(isUrdu)}
         </div>
       </body>
       </html>
@@ -535,7 +538,8 @@ export const emailTemplates = {
         urduTitle: 'آرڈر کامیابی سے ڈیلیور ہو گیا!',
         message: 'Your order has been delivered! We hope your little one loves their new dress. Thank you for shopping with Angel Baby Dresses!',
         urduMessage: 'آپ کا آرڈر ڈیلیور ہو گیا! امید ہے آپ کے بچے کو ان کا نیا لباس پسند آئے گا۔ Angel Baby Dresses سے خریداری کا شکریہ!',
-        color: '#4CAF50'
+        color: '#4CAF50',
+        showReview: true
       },
       cancelled: {
         emoji: '❌',
@@ -619,6 +623,20 @@ export const emailTemplates = {
               </div>
             ` : ''}
 
+            ${config.showReview ? `
+              <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border: 2px solid #FF9800; border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #E65100;">⭐ ${isUrdu ? 'اپنا تجربہ شیئر کریں!' : 'Share Your Experience!'} ⭐</h3>
+                <p style="color: #F57C00; margin: 0 0 20px 0; font-size: 15px;">
+                  ${isUrdu
+                    ? 'براہ کرم اپنا تجربہ شیئر کریں اور جائزہ دیں۔ آپ کی رائے ہمارے لیے بہت اہم ہے۔'
+                    : 'Please share your experience and leave a review. Your feedback matters to us.'}
+                </p>
+                <a href="${process.env.CLIENT_URL || 'https://angelbabydresses.com'}/orders/${order._id}#reviews" style="display: inline-block; background: #FF9800; color: white; padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                  ✍️ ${isUrdu ? 'ابھی جائزہ لکھیں' : 'Write a Review Now'}
+                </a>
+              </div>
+            ` : ''}
+
             <div style="text-align: center; margin-top: 30px;">
               <a href="${process.env.CLIENT_URL || 'https://angelbabydresses.com'}/orders/${order._id}" style="display: inline-block; background: #FF69B4; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 5px;">
                 ${isUrdu ? 'آرڈر کی تفصیلات دیکھیں' : 'View Order Details'}
@@ -628,10 +646,7 @@ export const emailTemplates = {
               </a>
             </div>
           </div>
-          <div class="footer">
-            <p>Angel Baby Dresses</p>
-            <p>Beautiful Clothes for Beautiful Kids</p>
-          </div>
+          ${getEmailFooter(isUrdu)}
         </div>
       </body>
       </html>
@@ -689,6 +704,7 @@ export const emailTemplates = {
               </a>
             </div>
           </div>
+          ${getEmailFooter()}
         </div>
       </body>
       </html>
@@ -745,6 +761,7 @@ export const emailTemplates = {
               </a>
             </div>
           </div>
+          ${getEmailFooter()}
         </div>
       </body>
       </html>
@@ -890,10 +907,7 @@ export const emailTemplates = {
               Thank you for shopping with Angel Baby Dresses! 🎀
             </p>
           </div>
-          <div class="footer">
-            <p>Angel Baby Dresses</p>
-            <p>Beautiful Clothes for Beautiful Kids</p>
-          </div>
+          ${getEmailFooter()}
         </div>
       </body>
       </html>

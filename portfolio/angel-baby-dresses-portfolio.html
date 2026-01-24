@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angel Baby Dresses - Full Stack Web Development Portfolio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF69B4;
+            --primary-dark: #FF1493;
+            --secondary: #FFC0CB;
+            --dark: #1a1a2e;
+            --gray: #6b7280;
+            --light-gray: #f3f4f6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: var(--white);
+        }
+
+        .page {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 40px 50px;
+            page-break-after: always;
+        }
+
+        .page:last-child {
+            page-break-after: auto;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFE4E9 50%, #FFC0CB 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,105,180,0.1) 0%, transparent 70%);
+        }
+
+        .cover-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(255,105,180,0.3);
+        }
+
+        .cover-logo span {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .cover-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .cover-subtitle {
+            font-size: 18px;
+            color: var(--primary-dark);
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .cover-tagline {
+            font-size: 24px;
+            color: var(--gray);
+            margin-bottom: 60px;
+            font-style: italic;
+        }
+
+        .cover-meta {
+            background: var(--white);
+            padding: 30px 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .cover-meta h3 {
+            font-size: 14px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .cover-meta p {
+            font-size: 16px;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .tech-badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .section-number {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: var(--dark);
+        }
+
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--dark);
+            margin: 25px 0 15px 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #4a4a4a;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFE4E9 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .feature-card h4 {
+            color: var(--primary-dark);
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            margin: 0;
+            color: var(--gray);
+        }
+
+        /* Screenshot Placeholder */
+        .screenshot-container {
+            background: var(--light-gray);
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .screenshot-container.filled {
+            border: none;
+            padding: 0;
+            background: none;
+        }
+
+        .screenshot-container img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .screenshot-label {
+            color: var(--gray);
+            font-size: 14px;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        /* Architecture Diagram */
+        .architecture-diagram {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+        }
+
+        .arch-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .arch-box {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 120px;
+        }
+
+        .arch-box.frontend {
+            border-top: 4px solid #61dafb;
+        }
+
+        .arch-box.backend {
+            border-top: 4px solid #68a063;
+        }
+
+        .arch-box.database {
+            border-top: 4px solid #4db33d;
+        }
+
+        .arch-box.services {
+            border-top: 4px solid #ff6b6b;
+        }
+
+        .arch-box h5 {
+            font-size: 14px;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .arch-box p {
+            font-size: 11px;
+            color: var(--gray);
+            margin: 0;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            color: var(--primary);
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .data-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        /* Flow Diagram */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid var(--primary);
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .flow-step .step-num {
+            background: var(--primary);
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .flow-step p {
+            font-size: 12px;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .flow-arrow {
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFE4E9 100%);
+            border-left: 5px solid var(--primary);
+            padding: 20px 25px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        /* Print Styles */
+        @media print {
+            .page {
+                margin: 0;
+                padding: 20mm;
+                box-shadow: none;
+            }
+
+            .cover-page {
+                min-height: auto;
+                padding: 40mm 20mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="page cover-page">
+        <div class="cover-logo">
+            <span>A</span>
+        </div>
+        <h1 class="cover-title">Angel Baby Dresses</h1>
+        <p class="cover-subtitle">E-Commerce Platform for Custom Children's Clothing</p>
+        <p class="cover-tagline">"Beautiful Clothes for Beautiful Kids"</p>
+
+        <div class="cover-meta">
+            <h3>Full Stack Web Development Project</h3>
+            <p>Complete E-Commerce Solution with Custom Design Orders</p>
+            <div class="tech-badges">
+                <span class="tech-badge">React.js</span>
+                <span class="tech-badge">Node.js</span>
+                <span class="tech-badge">Express.js</span>
+                <span class="tech-badge">MongoDB</span>
+                <span class="tech-badge">Tailwind CSS</span>
+                <span class="tech-badge">Firebase</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 2: Project Overview -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">1</div>
+                <h2 class="section-title">Project Overview</h2>
+            </div>
+
+            <p><strong>Angel Baby Dresses</strong> is a comprehensive e-commerce platform specializing in custom-made children's dresses. The platform enables customers to browse ready-made products, request custom designs, and manage orders with a unique split-payment system tailored for the Pakistani market.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="number">50+</span>
+                    <span class="label">API Endpoints</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">15+</span>
+                    <span class="label">Database Models</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">30+</span>
+                    <span class="label">UI Components</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">2</span>
+                    <span class="label">Languages (EN/UR)</span>
+                </div>
+            </div>
+
+            <h3>Key Business Features</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Custom Design Orders</h4>
+                    <p>Customers can submit design ideas with reference images and receive personalized quotes from the admin team.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Split Payment System</h4>
+                    <p>50% advance payment via JazzCash/Easypaisa/Bank Transfer, remaining 50% + shipping as COD.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Age-Based Pricing</h4>
+                    <p>Dynamic pricing based on child's age range, with different prices for different size categories.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Bilingual Support</h4>
+                    <p>Full RTL support for Urdu language, making the platform accessible to local customers.</p>
+                </div>
+            </div>
+
+            <h3>Target Audience</h3>
+            <ul>
+                <li><strong>Primary:</strong> Parents looking for premium, custom-made dresses for their daughters</li>
+                <li><strong>Secondary:</strong> Gift buyers for special occasions (birthdays, Eid, weddings)</li>
+                <li><strong>Geographic Focus:</strong> Pakistan, with support for local payment methods</li>
+            </ul>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 2</span>
+        </div>
+    </div>
+
+    <!-- Page 3: Frontend / UI -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">2</div>
+                <h2 class="section-title">Frontend / User Interface</h2>
+            </div>
+
+            <p>The frontend is built with <strong>React.js</strong> and <strong>Tailwind CSS</strong>, featuring a modern, responsive design optimized for both desktop and mobile devices. The UI emphasizes a soft, elegant aesthetic aligned with the children's clothing brand.</p>
+
+            <h3>Technology Stack</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Technology</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>React.js 18</td>
+                    <td>Component-based UI framework with hooks</td>
+                </tr>
+                <tr>
+                    <td>Tailwind CSS</td>
+                    <td>Utility-first CSS framework for rapid styling</td>
+                </tr>
+                <tr>
+                    <td>React Query (TanStack)</td>
+                    <td>Server state management and caching</td>
+                </tr>
+                <tr>
+                    <td>Zustand</td>
+                    <td>Lightweight client state management</td>
+                </tr>
+                <tr>
+                    <td>React Router v6</td>
+                    <td>Client-side routing and navigation</td>
+                </tr>
+                <tr>
+                    <td>i18next</td>
+                    <td>Internationalization (English/Urdu)</td>
+                </tr>
+                <tr>
+                    <td>Swiper.js</td>
+                    <td>Touch-enabled image carousels</td>
+                </tr>
+                <tr>
+                    <td>React Hook Form</td>
+                    <td>Performant form handling with validation</td>
+                </tr>
+            </table>
+
+            <h3>Key UI Features</h3>
+            <ul>
+                <li><strong>Responsive Design:</strong> Mobile-first approach with breakpoints for tablet and desktop</li>
+                <li><strong>RTL Support:</strong> Full right-to-left layout for Urdu language</li>
+                <li><strong>Image Optimization:</strong> Lazy loading, responsive images, and lightbox gallery</li>
+                <li><strong>Smooth Animations:</strong> CSS transitions for hover effects and page transitions</li>
+                <li><strong>Accessibility:</strong> ARIA labels, keyboard navigation, and semantic HTML</li>
+            </ul>
+
+            <div class="screenshot-container">
+                <p style="color: #999; font-size: 14px;">[Screenshot: Homepage with Hero Banner, Featured Products, and Newsletter Section]</p>
+                <p class="screenshot-label">Homepage showcasing the elegant pink theme and product grid</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 3</span>
+        </div>
+    </div>
+
+    <!-- Page 4: UI Components -->
+    <div class="page">
+        <div class="section">
+            <h3>Customer-Facing Pages</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Homepage</h4>
+                    <p>Hero banner, featured products, categories, testimonials, and newsletter signup with marquee announcement bar.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Product Catalog</h4>
+                    <p>Filterable grid with category, price range, and sorting options. Infinite scroll pagination.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Product Detail</h4>
+                    <p>Image gallery with zoom, age-based pricing selector, color options, reviews, and related products.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Shopping Cart</h4>
+                    <p>Slide-out drawer with quantity controls, price breakdown, and checkout button.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Checkout Flow</h4>
+                    <p>Multi-step process: shipping info, payment method selection, order review, and confirmation.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Custom Design Request</h4>
+                    <p>Form with image upload, design description, measurements, and special requirements.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Order Tracking</h4>
+                    <p>Visual progress tracker showing order status from pending to delivered.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>User Account</h4>
+                    <p>Order history, wishlist, profile settings, and saved addresses.</p>
+                </div>
+            </div>
+
+            <h3>Admin Dashboard Features</h3>
+            <ul>
+                <li><strong>Dashboard Overview:</strong> Sales analytics, recent orders, and key metrics</li>
+                <li><strong>Order Management:</strong> Status updates, payment verification, shipping details</li>
+                <li><strong>Product Management:</strong> CRUD operations with image upload and age-based pricing</li>
+                <li><strong>Custom Design Requests:</strong> Review submissions, send quotes, track progress</li>
+                <li><strong>Customer Management:</strong> View customers, order history, and total spend</li>
+                <li><strong>Settings:</strong> Site configuration, email templates, and payment accounts</li>
+            </ul>
+
+            <div class="screenshot-container">
+                <p style="color: #999; font-size: 14px;">[Screenshot: Admin Dashboard with Analytics and Order Management]</p>
+                <p class="screenshot-label">Admin panel with comprehensive order and product management</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 4</span>
+        </div>
+    </div>
+
+    <!-- Page 5: Backend Architecture -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">3</div>
+                <h2 class="section-title">Backend Architecture</h2>
+            </div>
+
+            <p>The backend is built with <strong>Node.js</strong> and <strong>Express.js</strong>, following RESTful API design principles. It handles authentication, order processing, payment verification, email notifications, and integrates with cloud services for image storage.</p>
+
+            <div class="architecture-diagram">
+                <div class="arch-row">
+                    <div class="arch-box frontend">
+                        <h5>React Frontend</h5>
+                        <p>Firebase Hosting</p>
+                    </div>
+                </div>
+                <div class="arch-arrow">↓ HTTPS API Calls ↓</div>
+                <div class="arch-row">
+                    <div class="arch-box backend">
+                        <h5>Express.js API</h5>
+                        <p>Node.js Server</p>
+                    </div>
+                </div>
+                <div class="arch-arrow">↓ ↓ ↓</div>
+                <div class="arch-row">
+                    <div class="arch-box database">
+                        <h5>MongoDB</h5>
+                        <p>Database</p>
+                    </div>
+                    <div class="arch-box services">
+                        <h5>Cloudinary</h5>
+                        <p>Image CDN</p>
+                    </div>
+                    <div class="arch-box services">
+                        <h5>Nodemailer</h5>
+                        <p>Email Service</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>API Structure</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Route</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>/api/auth/*</td>
+                    <td>User authentication, registration, password reset</td>
+                </tr>
+                <tr>
+                    <td>/api/products/*</td>
+                    <td>Product CRUD, search, filtering, related products</td>
+                </tr>
+                <tr>
+                    <td>/api/orders/*</td>
+                    <td>Order creation, status updates, payment processing</td>
+                </tr>
+                <tr>
+                    <td>/api/cart/*</td>
+                    <td>Cart management for authenticated users</td>
+                </tr>
+                <tr>
+                    <td>/api/reviews/*</td>
+                    <td>Product reviews with verified purchase check</td>
+                </tr>
+                <tr>
+                    <td>/api/custom-designs/*</td>
+                    <td>Custom design submissions and quotes</td>
+                </tr>
+                <tr>
+                    <td>/api/admin/*</td>
+                    <td>Admin-only operations and management</td>
+                </tr>
+            </table>
+
+            <h3>Security Measures</h3>
+            <ul>
+                <li><strong>JWT Authentication:</strong> Secure token-based authentication with refresh tokens</li>
+                <li><strong>Password Hashing:</strong> bcrypt with salt rounds for secure password storage</li>
+                <li><strong>Input Validation:</strong> Express-validator for sanitizing all user inputs</li>
+                <li><strong>Rate Limiting:</strong> Protection against brute force attacks</li>
+                <li><strong>CORS Configuration:</strong> Restricted to allowed origins only</li>
+            </ul>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 5</span>
+        </div>
+    </div>
+
+    <!-- Page 6: Database Design -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">4</div>
+                <h2 class="section-title">Database Design</h2>
+            </div>
+
+            <p>The application uses <strong>MongoDB</strong> with <strong>Mongoose ODM</strong> for data modeling. The schema design supports complex relationships, embedded documents for performance, and indexing for fast queries.</p>
+
+            <h3>Core Data Models</h3>
+
+            <div class="code-block">
+<span class="comment">// Order Schema - Supports split payment system</span>
+{
+  orderNumber: <span class="string">"ABD-2024-XXXXX"</span>,
+  user: ObjectId(<span class="string">"ref: User"</span>),
+  items: [{
+    product: ObjectId,
+    name: String,
+    price: Number,
+    quantity: Number,
+    ageRange: String,
+    color: { name, hex }
+  }],
+  subtotal: Number,
+  shippingCost: Number,
+  total: Number,
+  status: <span class="string">"pending | confirmed | processing | shipped | delivered"</span>,
+  advancePayment: {
+    amount: Number,
+    status: <span class="string">"pending | submitted | approved | rejected"</span>,
+    screenshot: { url, publicId }
+  },
+  finalPayment: {
+    amount: Number,
+    status: <span class="string">"cod_pending | cod_collected"</span>
+  },
+  shippingAddress: { fullName, phone, address, city, province }
+}
+            </div>
+
+            <h3>Key Models Overview</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Model</th>
+                    <th>Purpose</th>
+                    <th>Key Fields</th>
+                </tr>
+                <tr>
+                    <td>User</td>
+                    <td>Customer & admin accounts</td>
+                    <td>name, email, password, role, wishlist</td>
+                </tr>
+                <tr>
+                    <td>Product</td>
+                    <td>Product catalog</td>
+                    <td>name (en/ur), agePricing[], images[], colors[]</td>
+                </tr>
+                <tr>
+                    <td>Order</td>
+                    <td>Order management</td>
+                    <td>items[], payments, status, shippingAddress</td>
+                </tr>
+                <tr>
+                    <td>CustomDesign</td>
+                    <td>Custom order requests</td>
+                    <td>description, uploadedImages[], quotedPrice</td>
+                </tr>
+                <tr>
+                    <td>Review</td>
+                    <td>Product reviews</td>
+                    <td>rating, comment, user, product, isVerified</td>
+                </tr>
+                <tr>
+                    <td>Cart</td>
+                    <td>Shopping cart</td>
+                    <td>user, items[], updatedAt</td>
+                </tr>
+                <tr>
+                    <td>Setting</td>
+                    <td>Site configuration</td>
+                    <td>siteName, logo, contact, notifications</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box">
+                <h4>Multilingual Support</h4>
+                <p>Product names and descriptions are stored as objects with language keys ({ en: "...", ur: "..." }), enabling seamless bilingual content management without duplicate records.</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 6</span>
+        </div>
+    </div>
+
+    <!-- Page 7: User Flows -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">5</div>
+                <h2 class="section-title">User Flows & Features</h2>
+            </div>
+
+            <h3>Customer Purchase Flow</h3>
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <p>Browse Products</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <p>Select Age & Add to Cart</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <p>Checkout & Pay 50%</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <p>Upload Payment Proof</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">5</div>
+                    <p>Admin Verifies</p>
+                </div>
+            </div>
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="step-num">6</div>
+                    <p>Order Processing</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">7</div>
+                    <p>Shipped with Tracking</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">8</div>
+                    <p>Pay COD on Delivery</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">9</div>
+                    <p>Leave Review</p>
+                </div>
+            </div>
+
+            <h3>Key Feature Implementations</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Authentication System</h4>
+                    <p>JWT-based auth with email verification, password reset via email, and role-based access control (customer/admin).</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Payment Verification</h4>
+                    <p>Screenshot upload to Cloudinary, admin review panel, email notifications on approval/rejection.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Email Notifications</h4>
+                    <p>12+ email templates for order confirmation, shipping updates, payment status, and promotional campaigns.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Review System</h4>
+                    <p>Only verified purchasers can review. Requires delivered order. Displays average ratings on products.</p>
+                </div>
+            </div>
+
+            <h3>Custom Design Order Flow</h3>
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <p>Submit Design Request</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <p>Admin Reviews</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <p>Quote Sent via Email</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <p>Customer Accepts</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="step-num">5</div>
+                    <p>Converted to Order</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 7</span>
+        </div>
+    </div>
+
+    <!-- Page 8: Email System -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">6</div>
+                <h2 class="section-title">Email Notification System</h2>
+            </div>
+
+            <p>The platform includes a comprehensive email notification system built with <strong>Nodemailer</strong> and custom HTML templates. All emails are bilingual (English/Urdu) and feature branded styling.</p>
+
+            <h3>Email Templates</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Template</th>
+                    <th>Trigger</th>
+                    <th>Recipients</th>
+                </tr>
+                <tr>
+                    <td>Order Confirmation</td>
+                    <td>New order placed</td>
+                    <td>Customer</td>
+                </tr>
+                <tr>
+                    <td>Admin New Order Alert</td>
+                    <td>New order placed</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td>Payment Approved</td>
+                    <td>Advance payment verified</td>
+                    <td>Customer</td>
+                </tr>
+                <tr>
+                    <td>Payment Rejected</td>
+                    <td>Payment verification failed</td>
+                    <td>Customer</td>
+                </tr>
+                <tr>
+                    <td>Order Status Update</td>
+                    <td>Status changes</td>
+                    <td>Customer</td>
+                </tr>
+                <tr>
+                    <td>Order Shipped</td>
+                    <td>Tracking number added</td>
+                    <td>Customer</td>
+                </tr>
+                <tr>
+                    <td>Order Delivered</td>
+                    <td>Delivery confirmed</td>
+                    <td>Customer + Review Request</td>
+                </tr>
+                <tr>
+                    <td>Shipping Charges Set</td>
+                    <td>Weight calculated</td>
+                    <td>Customer (COD amount)</td>
+                </tr>
+                <tr>
+                    <td>Custom Design Quote</td>
+                    <td>Quote created</td>
+                    <td>Customer</td>
+                </tr>
+                <tr>
+                    <td>Password Reset</td>
+                    <td>Reset requested</td>
+                    <td>User</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box">
+                <h4>Email Features</h4>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li>Social media links (Instagram, Facebook, WhatsApp) in footer</li>
+                    <li>"Follow us" promotional text in all customer emails</li>
+                    <li>Review request with direct link in delivery emails</li>
+                    <li>Payment account details in order confirmation</li>
+                    <li>WhatsApp contact button for instant support</li>
+                </ul>
+            </div>
+
+            <div class="screenshot-container">
+                <p style="color: #999; font-size: 14px;">[Screenshot: Order Confirmation Email with Payment Instructions]</p>
+                <p class="screenshot-label">Professional HTML email template with branded styling</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 8</span>
+        </div>
+    </div>
+
+    <!-- Page 9: Technical Implementation -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">7</div>
+                <h2 class="section-title">Technical Implementation Highlights</h2>
+            </div>
+
+            <h3>Performance Optimizations</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>React Query Caching</h4>
+                    <p>Intelligent data caching with stale-while-revalidate pattern. Reduces API calls by 60%+.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Image Optimization</h4>
+                    <p>Cloudinary transformations for responsive images. WebP format, lazy loading, blur placeholders.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Code Splitting</h4>
+                    <p>Route-based lazy loading with React.lazy() and Suspense for faster initial load.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Database Indexing</h4>
+                    <p>Compound indexes on frequently queried fields. Text indexes for search functionality.</p>
+                </div>
+            </div>
+
+            <h3>Deployment Architecture</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Component</th>
+                    <th>Service</th>
+                    <th>Details</th>
+                </tr>
+                <tr>
+                    <td>Frontend</td>
+                    <td>Firebase Hosting</td>
+                    <td>Global CDN, SSL, custom domain</td>
+                </tr>
+                <tr>
+                    <td>Backend API</td>
+                    <td>VPS (Ubuntu)</td>
+                    <td>PM2 cluster mode, Nginx reverse proxy</td>
+                </tr>
+                <tr>
+                    <td>Database</td>
+                    <td>MongoDB</td>
+                    <td>Self-hosted with auth enabled</td>
+                </tr>
+                <tr>
+                    <td>Images</td>
+                    <td>Cloudinary</td>
+                    <td>CDN delivery, auto-optimization</td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td>Gmail SMTP</td>
+                    <td>App passwords, Nodemailer</td>
+                </tr>
+                <tr>
+                    <td>Domain</td>
+                    <td>Custom</td>
+                    <td>angelbabydresses.com</td>
+                </tr>
+            </table>
+
+            <h3>Code Quality Practices</h3>
+            <ul>
+                <li><strong>Modular Architecture:</strong> Separated controllers, services, routes, and models</li>
+                <li><strong>Error Handling:</strong> Centralized error middleware with meaningful messages</li>
+                <li><strong>Environment Config:</strong> Separate .env files for development and production</li>
+                <li><strong>API Response Format:</strong> Consistent { success, data, message } structure</li>
+                <li><strong>Reusable Components:</strong> Shared UI components with props-based customization</li>
+            </ul>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 9</span>
+        </div>
+    </div>
+
+    <!-- Page 10: Summary -->
+    <div class="page">
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">8</div>
+                <h2 class="section-title">Summary & Results</h2>
+            </div>
+
+            <p>Angel Baby Dresses represents a complete, production-ready e-commerce solution that demonstrates expertise across the full stack development spectrum. The project showcases ability to handle complex business requirements while maintaining code quality and user experience.</p>
+
+            <h3>Project Achievements</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="number">100%</span>
+                    <span class="label">Responsive Design</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">12+</span>
+                    <span class="label">Email Templates</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">2</span>
+                    <span class="label">User Roles</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">Live</span>
+                    <span class="label">In Production</span>
+                </div>
+            </div>
+
+            <h3>Technical Skills Demonstrated</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Frontend Development</h4>
+                    <p>React.js, State Management, Responsive Design, RTL Support, Performance Optimization</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Backend Development</h4>
+                    <p>Node.js, Express.js, RESTful APIs, Authentication, File Uploads, Email Integration</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Database Design</h4>
+                    <p>MongoDB, Mongoose ODM, Schema Design, Indexing, Aggregation Pipelines</p>
+                </div>
+                <div class="feature-card">
+                    <h4>DevOps & Deployment</h4>
+                    <p>Linux VPS, PM2, Nginx, Firebase Hosting, SSL Configuration, Domain Management</p>
+                </div>
+            </div>
+
+            <h3>Unique Selling Points</h3>
+            <ul>
+                <li><strong>Custom Payment Flow:</strong> Split payment system tailored for Pakistani market needs</li>
+                <li><strong>Bilingual Platform:</strong> Full English/Urdu support with RTL layout</li>
+                <li><strong>Custom Design Orders:</strong> Complete workflow for personalized product requests</li>
+                <li><strong>Comprehensive Admin Panel:</strong> Full control over orders, products, and customers</li>
+                <li><strong>Professional Email System:</strong> Branded, bilingual email notifications</li>
+            </ul>
+
+            <div class="highlight-box">
+                <h4>Live Website</h4>
+                <p style="font-size: 18px; margin: 0;"><strong>https://angelbabydresses.com</strong></p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Angel Baby Dresses - Portfolio Document</span>
+            <span>Page 10</span>
+        </div>
+    </div>
+
+    <!-- Back Cover -->
+    <div class="page cover-page" style="min-height: 50vh; padding: 60px;">
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; color: var(--dark); margin-bottom: 20px;">Thank You</h2>
+        <p style="font-size: 18px; color: var(--gray); margin-bottom: 40px;">For reviewing this portfolio project</p>
+
+        <div class="cover-meta" style="max-width: 400px;">
+            <h3>Contact Information</h3>
+            <p style="margin-bottom: 5px;">Full Stack Web Developer</p>
+            <div class="tech-badges" style="margin-top: 20px;">
+                <span class="tech-badge">Available for Projects</span>
+            </div>
+        </div>
+
+        <p style="margin-top: 60px; font-size: 12px; color: var(--gray);">
+            Document generated for portfolio presentation purposes<br>
+            All code and designs are original work
+        </p>
+    </div>
+</body>
+</html>

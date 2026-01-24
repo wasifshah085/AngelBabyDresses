@@ -29,7 +29,7 @@ const HERO_SLIDES_DATA = [
     id: 'hero-2',
     titleKey: 'hero.newCollection',
     subtitleKey: 'hero.newCollectionSubtitle',
-    image: 'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=1920',
+    image: '/uploads/new-collection.png',
     ctaKey: 'common.viewAll',
     link: '/shop?filter=new'
   },
@@ -37,7 +37,7 @@ const HERO_SLIDES_DATA = [
     id: 'hero-3',
     titleKey: 'hero.customDesigns',
     subtitleKey: 'hero.customDesignsSubtitle',
-    image: 'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?w=1920',
+    image: '/uploads/mother-daughter.png',
     ctaKey: 'hero.customDesign',
     link: '/custom-design'
   }
@@ -70,7 +70,7 @@ const HeroSwiper = memo(function HeroSwiper() {
         <SwiperSlide key={slide.id}>
           <div
             className="relative h-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${slide.image})` }}
+            style={{ backgroundImage: `url(${getImageUrl(slide.image)})` }}
           >
             <div className="absolute inset-0 bg-black/40" />
             <div className="container relative h-full flex items-center">

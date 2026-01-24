@@ -30,7 +30,9 @@
       "Bash(pm2 restart:*)",
       "Bash(pm2 show:*)",
       "Bash(chmod:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(node server/scripts/cleanupTestData.js:*)",
+      "Bash(node -e:*)"
     ]
   }
 }
