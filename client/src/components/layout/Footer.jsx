@@ -182,7 +182,17 @@ const Footer = () => {
         <div className="container py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <p>{t('footer.copyright')}</p>
-            <p>{t('footer.madeWithLove')}</p>
+            <p>
+              Designed & Developed by{' '}
+              <a
+                href="https://zyvonsolutions.web.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-400 hover:text-primary-300 transition-colors"
+              >
+                Zyvon Solutions
+              </a>
+            </p>
           </div>
         </div>
       </div>
