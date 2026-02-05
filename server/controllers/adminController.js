@@ -13,19 +13,31 @@ import { sendEmail, emailTemplates } from '../services/emailService.js';
 import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappService.js';
 // Helper function to upload file to Cloudinary
 const uploadToCloudinary = async (file, folder) => {
-  const result = await cloudinary.uploader.upload(
-    `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-    {
-      folder: `angel-baby-dresses/${folder}`,
-      transformation: folder === 'products'
-        ? [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }]
-        : undefined
-    }
-  );
-  return {
-    url: result.secure_url,
-    publicId: result.public_id
-  };
+  console.log('uploadToCloudinary called:', { folder, mimetype: file.mimetype, size: file.buffer?.length });
+  console.log('Cloudinary config:', {
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'set' : 'missing',
+    api_key: process.env.CLOUDINARY_API_KEY ? 'set' : 'missing'
+  });
+
+  try {
+    const result = await cloudinary.uploader.upload(
+      `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+      {
+        folder: `angel-baby-dresses/${folder}`,
+        transformation: folder === 'products'
+          ? [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }]
+          : undefined
+      }
+    );
+    console.log('Cloudinary upload success:', result.secure_url);
+    return {
+      url: result.secure_url,
+      publicId: result.public_id
+    };
+  } catch (error) {
+    console.error('Cloudinary upload error:', error.message, error);
+    throw error;
+  }
 };
 
 // Helper function to delete file from Cloudinary (skips old local_ references)
