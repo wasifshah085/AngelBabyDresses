@@ -1,11 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
-import dotenv from 'dotenv';
 
-// Load environment variables before configuring cloudinary
-dotenv.config();
-
+// Configure cloudinary immediately using process.env
+// On Vercel, env vars are injected before module execution
+// On local dev, dotenv should be loaded before importing this module
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

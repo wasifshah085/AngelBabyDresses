@@ -1,9 +1,12 @@
+// Load env vars FIRST before any other imports
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import connectDB, { closeDB } from './config/db.js';
 
 // Route imports
@@ -19,9 +22,6 @@ import Setting from './models/Setting.js';
 
 // Middleware imports
 import errorHandler from './middleware/errorHandler.js';
-
-// Load env vars
-dotenv.config();
 
 // Connect to database
 connectDB();
@@ -91,6 +91,15 @@ app.use('/api/reviews', reviewRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Angel Baby Dresses API is running' });
+});
+
+// Debug endpoint for Cloudinary config (remove in production)
+app.get('/api/debug/cloudinary', (req, res) => {
+  res.json({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'set' : 'missing',
+    api_key: process.env.CLOUDINARY_API_KEY ? 'set' : 'missing',
+    api_secret: process.env.CLOUDINARY_API_SECRET ? 'set (length: ' + process.env.CLOUDINARY_API_SECRET.length + ')' : 'missing'
+  });
 });
 
 // Public settings endpoint (no auth required)
