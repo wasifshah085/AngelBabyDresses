@@ -16,6 +16,7 @@ out/
 .env.test.local
 .env.production.local
 .env.production
+.env.save*
 
 # SSL Certificates (never commit these!)
 *.pem

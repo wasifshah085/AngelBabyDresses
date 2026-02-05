@@ -1,65 +1,61 @@
 import mongoose from 'mongoose';
 
+// Cache the connection across serverless invocations
+let cached = global._mongooseConnection;
+if (!cached) {
+  cached = global._mongooseConnection = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
+  // If already connected, return the existing connection
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  const uri = process.env.MONGO_URI;
+
+  if (!uri) {
+    throw new Error('MONGO_URI environment variable is not defined');
+  }
+
   try {
-    // MongoDB connection options for production stability
+    // MongoDB connection options optimized for serverless
     const options = {
-      // Connection pool settings
-      maxPoolSize: 10, // Maximum number of connections in the pool
-      minPoolSize: 2,  // Minimum number of connections in the pool
-
-      // Timeout settings
-      serverSelectionTimeoutMS: 10000, // Timeout for server selection (10s)
-      socketTimeoutMS: 45000,          // Socket timeout (45s)
-      connectTimeoutMS: 10000,         // Initial connection timeout (10s)
-
-      // Keep connection alive
-      heartbeatFrequencyMS: 10000, // Check server health every 10s
-
-      // Buffer commands when disconnected (helps during brief disconnections)
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      heartbeatFrequencyMS: 10000,
       bufferCommands: true,
-
-      // Auto-retry writes
       retryWrites: true,
       retryReads: true
     };
 
-    const conn = await mongoose.connect(
-      process.env.MONGODB_URI || 'mongodb://localhost:27017/angel-baby-dresses',
-      options
-    );
+    if (!cached.promise) {
+      cached.promise = mongoose.connect(uri, options).then((m) => m);
+    }
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-
-    // Connection event handlers for monitoring and auto-reconnection
-    mongoose.connection.on('connected', () => {
-      console.log('MongoDB connection established');
-    });
+    cached.conn = await cached.promise;
+    console.log(`MongoDB Connected: ${cached.conn.connection.host}`);
 
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err.message);
+      cached.conn = null;
+      cached.promise = null;
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('MongoDB disconnected. Attempting to reconnect...');
+      console.warn('MongoDB disconnected');
+      cached.conn = null;
+      cached.promise = null;
     });
 
-    mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected successfully');
-    });
-
-    // Handle close event
-    mongoose.connection.on('close', () => {
-      console.log('MongoDB connection closed');
-    });
-
+    return cached.conn;
   } catch (error) {
+    cached.promise = null;
     console.error(`MongoDB Connection Error: ${error.message}`);
-    // Don't exit immediately - let PM2 handle restart with backoff
-    // This gives time for the database to recover
-    setTimeout(() => {
-      process.exit(1);
-    }, 5000);
+    throw error;
   }
 };
 
@@ -67,6 +63,8 @@ const connectDB = async () => {
 export const closeDB = async () => {
   try {
     await mongoose.connection.close();
+    cached.conn = null;
+    cached.promise = null;
     console.log('MongoDB connection closed through app termination');
   } catch (error) {
     console.error('Error closing MongoDB connection:', error.message);
