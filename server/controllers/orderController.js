@@ -94,32 +94,6 @@ export const createOrder = async (req, res) => {
           url: result.secure_url,
           publicId: result.public_id
         };
-      } else {
-        // Local storage fallback
-        const fs = await import('fs');
-        const path = await import('path');
-        const crypto = await import('crypto');
-        const { fileURLToPath } = await import('url');
-
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
-        const uploadsDir = path.join(__dirname, '..', 'uploads', 'payments');
-
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-
-        const ext = path.extname(screenshot.originalname).toLowerCase();
-        const uniqueName = `${crypto.randomBytes(16).toString('hex')}${ext}`;
-        const filePath = path.join(uploadsDir, uniqueName);
-
-        fs.writeFileSync(filePath, screenshot.buffer);
-
-        // Store relative URL - frontend will handle making it absolute
-        screenshotData = {
-          url: `/uploads/payments/${uniqueName}`,
-          publicId: `local_payments_${uniqueName}`
-        };
       }
     }
 
@@ -378,32 +352,6 @@ export const submitAdvancePayment = async (req, res) => {
         url: result.secure_url,
         publicId: result.public_id
       };
-    } else {
-      // Local storage fallback
-      const fs = await import('fs');
-      const path = await import('path');
-      const crypto = await import('crypto');
-      const { fileURLToPath } = await import('url');
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const uploadsDir = path.join(__dirname, '..', 'uploads', 'payments');
-
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      const uniqueName = `${crypto.randomBytes(16).toString('hex')}${ext}`;
-      const filePath = path.join(uploadsDir, uniqueName);
-
-      fs.writeFileSync(filePath, req.file.buffer);
-
-      // Store relative URL - frontend will handle making it absolute
-      screenshotData = {
-        url: `/uploads/payments/${uniqueName}`,
-        publicId: `local_payments_${uniqueName}`
-      };
     }
 
     order.advancePayment.screenshot = screenshotData;
@@ -495,32 +443,6 @@ export const submitFinalPayment = async (req, res) => {
       screenshotData = {
         url: result.secure_url,
         publicId: result.public_id
-      };
-    } else {
-      // Local storage fallback
-      const fs = await import('fs');
-      const path = await import('path');
-      const crypto = await import('crypto');
-      const { fileURLToPath } = await import('url');
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const uploadsDir = path.join(__dirname, '..', 'uploads', 'payments');
-
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      const uniqueName = `${crypto.randomBytes(16).toString('hex')}${ext}`;
-      const filePath = path.join(uploadsDir, uniqueName);
-
-      fs.writeFileSync(filePath, req.file.buffer);
-
-      // Store relative URL - frontend will handle making it absolute
-      screenshotData = {
-        url: `/uploads/payments/${uniqueName}`,
-        publicId: `local_payments_${uniqueName}`
       };
     }
 

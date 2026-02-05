@@ -11,61 +11,30 @@ import { cloudinary } from '../config/cloudinary.js';
 import { paginate, getPaginationInfo } from '../utils/helpers.js';
 import { sendEmail, emailTemplates } from '../services/emailService.js';
 import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappService.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import crypto from 'crypto';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Helper function to check if Cloudinary is configured
-const isCloudinaryConfigured = () => {
-  return process.env.CLOUDINARY_CLOUD_NAME &&
-         process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder' &&
-         process.env.CLOUDINARY_API_KEY &&
-         process.env.CLOUDINARY_API_KEY !== 'placeholder' &&
-         process.env.CLOUDINARY_API_SECRET &&
-         process.env.CLOUDINARY_API_SECRET !== 'placeholder' &&
-         !process.env.CLOUDINARY_API_SECRET.includes('*');
-};
-
-// Helper function to save file locally
-const saveFileLocally = async (file, folder) => {
-  const uploadsDir = path.join(__dirname, '..', 'uploads', folder);
-
-  // Ensure directory exists
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-
-  // Generate unique filename
-  const ext = path.extname(file.originalname).toLowerCase();
-  const uniqueName = `${crypto.randomBytes(16).toString('hex')}${ext}`;
-  const filePath = path.join(uploadsDir, uniqueName);
-
-  // Write file
-  fs.writeFileSync(filePath, file.buffer);
-
-  // Store relative URL - frontend will handle making it absolute
-  // This ensures URLs work regardless of deployment environment
+// Helper function to upload file to Cloudinary
+const uploadToCloudinary = async (file, folder) => {
+  const result = await cloudinary.uploader.upload(
+    `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+    {
+      folder: `angel-baby-dresses/${folder}`,
+      transformation: folder === 'products'
+        ? [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }]
+        : undefined
+    }
+  );
   return {
-    url: `/uploads/${folder}/${uniqueName}`,
-    publicId: `local_${folder}_${uniqueName}`
+    url: result.secure_url,
+    publicId: result.public_id
   };
 };
 
-// Helper function to delete local file
-const deleteLocalFile = (publicId) => {
-  if (!publicId || !publicId.startsWith('local_')) return;
-
-  const parts = publicId.replace('local_', '').split('_');
-  const folder = parts[0];
-  const filename = parts.slice(1).join('_');
-  const filePath = path.join(__dirname, '..', 'uploads', folder, filename);
-
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+// Helper function to delete file from Cloudinary (skips old local_ references)
+const deleteCloudinaryFile = async (publicId) => {
+  if (!publicId || publicId.startsWith('local_')) return;
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (e) {
+    console.error('Error deleting from Cloudinary:', e.message);
   }
 };
 
@@ -348,34 +317,12 @@ export const createProduct = async (req, res) => {
     if (req.files && req.files.length > 0) {
       productData.images = [];
 
-      if (isCloudinaryConfigured()) {
-        // Upload to Cloudinary
-        for (const file of req.files) {
-          try {
-            const result = await cloudinary.uploader.upload(
-              `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-              {
-                folder: 'angel-baby-dresses/products',
-                transformation: [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }]
-              }
-            );
-            productData.images.push({
-              url: result.secure_url,
-              publicId: result.public_id
-            });
-          } catch (uploadError) {
-            console.error('Cloudinary upload error:', uploadError.message);
-          }
-        }
-      } else {
-        // Save locally as fallback
-        for (const file of req.files) {
-          try {
-            const imageData = await saveFileLocally(file, 'products');
-            productData.images.push(imageData);
-          } catch (uploadError) {
-            console.error('Local file save error:', uploadError.message);
-          }
+      for (const file of req.files) {
+        try {
+          const imageData = await uploadToCloudinary(file, 'products');
+          productData.images.push(imageData);
+        } catch (uploadError) {
+          console.error('Cloudinary upload error:', uploadError.message);
         }
       }
     }
@@ -436,33 +383,12 @@ export const updateProduct = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const newImages = [];
 
-      if (isCloudinaryConfigured()) {
-        for (const file of req.files) {
-          try {
-            const result = await cloudinary.uploader.upload(
-              `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-              {
-                folder: 'angel-baby-dresses/products',
-                transformation: [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }]
-              }
-            );
-            newImages.push({
-              url: result.secure_url,
-              publicId: result.public_id
-            });
-          } catch (uploadError) {
-            console.error('Cloudinary upload error:', uploadError.message);
-          }
-        }
-      } else {
-        // Save locally as fallback
-        for (const file of req.files) {
-          try {
-            const imageData = await saveFileLocally(file, 'products');
-            newImages.push(imageData);
-          } catch (uploadError) {
-            console.error('Local file save error:', uploadError.message);
-          }
+      for (const file of req.files) {
+        try {
+          const imageData = await uploadToCloudinary(file, 'products');
+          newImages.push(imageData);
+        } catch (uploadError) {
+          console.error('Cloudinary upload error:', uploadError.message);
         }
       }
 
@@ -482,11 +408,7 @@ export const updateProduct = async (req, res) => {
       try {
         const removedIds = JSON.parse(updateData.removedImages);
         for (const publicId of removedIds) {
-          if (publicId.startsWith('local_')) {
-            deleteLocalFile(publicId);
-          } else if (isCloudinaryConfigured()) {
-            await cloudinary.uploader.destroy(publicId);
-          }
+          await deleteCloudinaryFile(publicId);
         }
         updateData.images = updateData.images?.filter(
           img => !removedIds.includes(img.publicId)
@@ -536,18 +458,10 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    // Delete images
+    // Delete images from Cloudinary
     for (const image of product.images) {
       if (image.publicId) {
-        if (image.publicId.startsWith('local_')) {
-          deleteLocalFile(image.publicId);
-        } else if (isCloudinaryConfigured()) {
-          try {
-            await cloudinary.uploader.destroy(image.publicId);
-          } catch (e) {
-            console.error('Error deleting image:', e.message);
-          }
-        }
+        await deleteCloudinaryFile(image.publicId);
       }
     }
 
@@ -614,26 +528,10 @@ export const createCategory = async (req, res) => {
 
     // Handle image upload
     if (req.file) {
-      if (isCloudinaryConfigured()) {
-        try {
-          const result = await cloudinary.uploader.upload(
-            `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
-            { folder: 'angel-baby-dresses/categories' }
-          );
-          categoryData.image = {
-            url: result.secure_url,
-            publicId: result.public_id
-          };
-        } catch (uploadError) {
-          console.error('Cloudinary upload error:', uploadError.message);
-        }
-      } else {
-        // Save locally as fallback
-        try {
-          categoryData.image = await saveFileLocally(req.file, 'categories');
-        } catch (uploadError) {
-          console.error('Local file save error:', uploadError.message);
-        }
+      try {
+        categoryData.image = await uploadToCloudinary(req.file, 'categories');
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError.message);
       }
     }
 
@@ -685,37 +583,13 @@ export const updateCategory = async (req, res) => {
     if (req.file) {
       // Delete old image first
       if (category.image?.publicId) {
-        if (category.image.publicId.startsWith('local_')) {
-          deleteLocalFile(category.image.publicId);
-        } else if (isCloudinaryConfigured()) {
-          try {
-            await cloudinary.uploader.destroy(category.image.publicId);
-          } catch (e) {
-            console.error('Error deleting old image:', e.message);
-          }
-        }
+        await deleteCloudinaryFile(category.image.publicId);
       }
 
-      if (isCloudinaryConfigured()) {
-        try {
-          const result = await cloudinary.uploader.upload(
-            `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
-            { folder: 'angel-baby-dresses/categories' }
-          );
-          updateData.image = {
-            url: result.secure_url,
-            publicId: result.public_id
-          };
-        } catch (uploadError) {
-          console.error('Cloudinary upload error:', uploadError.message);
-        }
-      } else {
-        // Save locally as fallback
-        try {
-          updateData.image = await saveFileLocally(req.file, 'categories');
-        } catch (uploadError) {
-          console.error('Local file save error:', uploadError.message);
-        }
+      try {
+        updateData.image = await uploadToCloudinary(req.file, 'categories');
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError.message);
       }
     }
 
@@ -770,17 +644,9 @@ export const deleteCategory = async (req, res) => {
       });
     }
 
-    // Delete image
+    // Delete image from Cloudinary
     if (category.image?.publicId) {
-      if (category.image.publicId.startsWith('local_')) {
-        deleteLocalFile(category.image.publicId);
-      } else if (isCloudinaryConfigured()) {
-        try {
-          await cloudinary.uploader.destroy(category.image.publicId);
-        } catch (e) {
-          console.error('Error deleting image:', e.message);
-        }
-      }
+      await deleteCloudinaryFile(category.image.publicId);
     }
 
     await category.deleteOne();
@@ -2356,77 +2222,27 @@ export const updateSettings = async (req, res) => {
 
     // Handle logo upload
     if (req.files?.logo) {
-      // Delete old logo
       if (settings.logo?.publicId) {
-        if (settings.logo.publicId.startsWith('local_')) {
-          deleteLocalFile(settings.logo.publicId);
-        } else if (isCloudinaryConfigured()) {
-          try {
-            await cloudinary.uploader.destroy(settings.logo.publicId);
-          } catch (e) {
-            console.error('Error deleting old logo:', e.message);
-          }
-        }
+        await deleteCloudinaryFile(settings.logo.publicId);
       }
 
-      if (isCloudinaryConfigured()) {
-        try {
-          const result = await cloudinary.uploader.upload(
-            `data:${req.files.logo[0].mimetype};base64,${req.files.logo[0].buffer.toString('base64')}`,
-            { folder: 'angel-baby-dresses/settings' }
-          );
-          settings.logo = {
-            url: result.secure_url,
-            publicId: result.public_id
-          };
-        } catch (uploadError) {
-          console.error('Cloudinary logo upload error:', uploadError.message);
-        }
-      } else {
-        // Save locally as fallback
-        try {
-          settings.logo = await saveFileLocally(req.files.logo[0], 'settings');
-        } catch (uploadError) {
-          console.error('Local logo save error:', uploadError.message);
-        }
+      try {
+        settings.logo = await uploadToCloudinary(req.files.logo[0], 'settings');
+      } catch (uploadError) {
+        console.error('Cloudinary logo upload error:', uploadError.message);
       }
     }
 
     // Handle favicon upload
     if (req.files?.favicon) {
-      // Delete old favicon
       if (settings.favicon?.publicId) {
-        if (settings.favicon.publicId.startsWith('local_')) {
-          deleteLocalFile(settings.favicon.publicId);
-        } else if (isCloudinaryConfigured()) {
-          try {
-            await cloudinary.uploader.destroy(settings.favicon.publicId);
-          } catch (e) {
-            console.error('Error deleting old favicon:', e.message);
-          }
-        }
+        await deleteCloudinaryFile(settings.favicon.publicId);
       }
 
-      if (isCloudinaryConfigured()) {
-        try {
-          const result = await cloudinary.uploader.upload(
-            `data:${req.files.favicon[0].mimetype};base64,${req.files.favicon[0].buffer.toString('base64')}`,
-            { folder: 'angel-baby-dresses/settings' }
-          );
-          settings.favicon = {
-            url: result.secure_url,
-            publicId: result.public_id
-          };
-        } catch (uploadError) {
-          console.error('Cloudinary favicon upload error:', uploadError.message);
-        }
-      } else {
-        // Save locally as fallback
-        try {
-          settings.favicon = await saveFileLocally(req.files.favicon[0], 'settings');
-        } catch (uploadError) {
-          console.error('Local favicon save error:', uploadError.message);
-        }
+      try {
+        settings.favicon = await uploadToCloudinary(req.files.favicon[0], 'settings');
+      } catch (uploadError) {
+        console.error('Cloudinary favicon upload error:', uploadError.message);
       }
     }
 
