@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "E-commerce platform for kids clothing",
   "private": true,
+  "type": "module",
   "workspaces": [
     "client",
     "server"
