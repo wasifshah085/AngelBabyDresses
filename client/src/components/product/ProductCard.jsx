@@ -101,7 +101,8 @@ const ProductCard = ({ product }) => {
               {discountPercent === 'SALE' ? 'SALE' : `-${discountPercent}%`}
             </span>
           ) : null}
-          {product.isNewArrival && (
+          {product.isNewArrival && product.createdAt &&
+            (Date.now() - new Date(product.createdAt).getTime()) < 5 * 24 * 60 * 60 * 1000 && (
             <span className="bg-primary-500 text-white text-xs font-bold px-2 py-1 rounded">
               NEW
             </span>

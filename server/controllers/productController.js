@@ -75,6 +75,7 @@ export const getProducts = async (req, res) => {
 
     if (newArrivals === 'true') {
       query.isNewArrival = true;
+      query.createdAt = { ...query.createdAt, $gte: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) };
     }
 
     // Build sort
@@ -202,7 +203,12 @@ export const getNewArrivals = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
 
-    const rawProducts = await Product.find({ isActive: true, isNewArrival: true })
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+    const rawProducts = await Product.find({
+      isActive: true,
+      isNewArrival: true,
+      createdAt: { $gte: fiveDaysAgo }
+    })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .limit(limit);
