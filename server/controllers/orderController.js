@@ -5,6 +5,7 @@ import Coupon from '../models/Coupon.js';
 import Setting from '../models/Setting.js';
 import { sendEmail, emailTemplates } from '../services/emailService.js';
 import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappService.js';
+import { getEffectivePrice } from '../utils/applySales.js';
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -555,6 +556,249 @@ export const cancelOrder = async (req, res) => {
     res.json({
       success: true,
       message: 'Order cancelled successfully',
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Create guest order (no authentication required)
+// @route   POST /api/orders/guest
+// @access  Public
+export const createGuestOrder = async (req, res) => {
+  try {
+    // Parse fields from FormData if needed
+    let shippingAddress = req.body.shippingAddress;
+    if (typeof shippingAddress === 'string') {
+      shippingAddress = JSON.parse(shippingAddress);
+    }
+    let items = req.body.items;
+    if (typeof items === 'string') {
+      items = JSON.parse(items);
+    }
+    let guestInfo = req.body.guestInfo;
+    if (typeof guestInfo === 'string') {
+      guestInfo = JSON.parse(guestInfo);
+    }
+
+    const { paymentMethod, notes } = req.body;
+    const screenshot = req.file;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No items provided'
+      });
+    }
+
+    if (!guestInfo?.email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Guest email is required'
+      });
+    }
+
+    if (!guestInfo?.name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Guest name is required'
+      });
+    }
+
+    // Validate products and resolve prices server-side
+    const orderItems = [];
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product || !product.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: `Product ${item.productId} is no longer available`
+        });
+      }
+
+      // Server-authoritative price
+      const price = await getEffectivePrice(product, item.ageRange);
+
+      const orderItem = {
+        product: product._id,
+        name: product.name.en,
+        image: product.images[0]?.url,
+        price,
+        quantity: item.quantity,
+        ageRange: item.ageRange
+      };
+
+      if (item.color && item.color.name) {
+        orderItem.color = item.color;
+      }
+
+      orderItems.push(orderItem);
+    }
+
+    // Calculate totals
+    const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shippingCost = 0;
+    const total = subtotal;
+
+    // Generate order number
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const orderNumber = `ABD${year}${month}${random}`;
+
+    // Calculate payment split
+    const advanceAmount = Math.ceil(subtotal / 2);
+    const finalAmount = subtotal - advanceAmount;
+
+    // Handle screenshot upload
+    let screenshotData = null;
+    if (screenshot) {
+      const { cloudinary } = await import('../config/cloudinary.js');
+      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder') {
+        const result = await cloudinary.uploader.upload(
+          `data:${screenshot.mimetype};base64,${screenshot.buffer.toString('base64')}`,
+          { folder: 'angel-baby-dresses/payments' }
+        );
+        screenshotData = {
+          url: result.secure_url,
+          publicId: result.public_id
+        };
+      }
+    }
+
+    const order = await Order.create({
+      orderNumber,
+      isGuestOrder: true,
+      guestInfo: {
+        name: guestInfo.name,
+        email: guestInfo.email,
+        phone: guestInfo.phone || shippingAddress.phone
+      },
+      items: orderItems,
+      subtotal,
+      shippingCost,
+      orderWeight: 0,
+      discount: 0,
+      total,
+      paymentMethod,
+      shippingAddress,
+      notes,
+      advancePayment: {
+        amount: advanceAmount,
+        status: screenshotData ? 'submitted' : 'pending',
+        screenshot: screenshotData,
+        submittedAt: screenshotData ? new Date() : null
+      },
+      finalPayment: {
+        amount: finalAmount,
+        method: 'cod',
+        status: 'cod_pending'
+      },
+      paymentStatus: screenshotData ? 'advance_submitted' : 'pending_advance'
+    });
+
+    // Update product sold count
+    for (const item of orderItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { soldCount: item.quantity }
+      });
+    }
+
+    // Send confirmation email to guest
+    try {
+      const { subject, html } = emailTemplates.orderConfirmation(order, 'en');
+      sendEmail({
+        to: guestInfo.email,
+        subject,
+        html
+      });
+    } catch (emailError) {
+      console.error('Guest order confirmation email error:', emailError.message);
+    }
+
+    // Send admin notification
+    let settings = {};
+    try {
+      settings = await Setting.findOne() || {};
+    } catch (e) {
+      // Settings not found
+    }
+
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || settings.email || 'admin@angelbabydresses.com';
+      const { subject: adminSubject, html: adminHtml } = emailTemplates.adminNewOrder(order);
+      sendEmail({
+        to: adminEmail,
+        subject: adminSubject,
+        html: adminHtml
+      });
+    } catch (adminEmailError) {
+      console.error('Admin notification email error:', adminEmailError.message);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Order placed successfully. Please submit advance payment to confirm.',
+      data: order,
+      paymentDetails: {
+        advanceAmount,
+        advanceMethod: 'online',
+        finalAmount,
+        finalMethod: 'cod',
+        shippingNote: 'Shipping charges (Rs 350/kg) will be added to COD amount based on actual weight',
+        accounts: {
+          easypaisa: '03471504434',
+          jazzcash: '03471504434',
+          bank: {
+            name: 'HBL',
+            accountNumber: '16817905812303',
+            accountHolder: 'Quratulain Syed'
+          }
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Lookup guest order by order number and email
+// @route   POST /api/orders/guest/lookup
+// @access  Public
+export const getGuestOrder = async (req, res) => {
+  try {
+    const { orderNumber, email } = req.body;
+
+    if (!orderNumber || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order number and email are required'
+      });
+    }
+
+    const order = await Order.findOne({
+      orderNumber,
+      isGuestOrder: true,
+      'guestInfo.email': email.toLowerCase()
+    }).select('orderNumber status statusHistory items total subtotal shippingCost discount shippingAddress trackingNumber trackingUrl estimatedDelivery createdAt advancePayment finalPayment paymentStatus paymentMethod guestInfo');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found. Please check your order number and email.'
+      });
+    }
+
+    res.json({
+      success: true,
       data: order
     });
   } catch (error) {

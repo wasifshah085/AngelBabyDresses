@@ -1,6 +1,7 @@
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 import Coupon from '../models/Coupon.js';
+import { getEffectivePrice } from '../utils/applySales.js';
 
 // @desc    Get cart
 // @route   GET /api/cart
@@ -31,7 +32,7 @@ export const getCart = async (req, res) => {
 // @access  Private
 export const addToCart = async (req, res) => {
   try {
-    const { productId, quantity, ageRange, color, price: clientPrice } = req.body;
+    const { productId, quantity, ageRange, color } = req.body;
 
     // Get product
     const product = await Product.findById(productId);
@@ -42,22 +43,8 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // Get price for the specific age range
-    let price = product.salePrice && product.salePrice < product.price
-      ? product.salePrice
-      : product.price;
-
-    if (product.agePricing && product.agePricing.length > 0 && ageRange) {
-      const agePriceData = product.agePricing.find(ap => ap.ageRange === ageRange);
-      if (agePriceData) {
-        price = agePriceData.salePrice || agePriceData.price;
-      }
-    }
-
-    // Use client price if provided (ensures consistency with frontend calculation)
-    if (clientPrice) {
-      price = clientPrice;
-    }
+    // Server-authoritative price resolution (includes dynamic sales)
+    const price = await getEffectivePrice(product, ageRange);
 
     // Get or create cart
     let cart = await Cart.findOne({ user: req.user._id });

@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { FiCheckCircle, FiClock, FiPackage, FiTruck, FiArrowRight } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
+import { useAuthStore } from '../store/useStore';
 
 const OrderSuccess = () => {
   const { orderNumber } = useParams();
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuthStore();
 
   const steps = [
     {
@@ -122,10 +124,17 @@ const OrderSuccess = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to={`/orders`} className="btn btn-primary">
-              View My Orders
-              <FiArrowRight className="w-5 h-5 ms-2" />
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/orders" className="btn btn-primary">
+                View My Orders
+                <FiArrowRight className="w-5 h-5 ms-2" />
+              </Link>
+            ) : (
+              <Link to={`/track-order`} className="btn btn-primary">
+                Track Your Order
+                <FiArrowRight className="w-5 h-5 ms-2" />
+              </Link>
+            )}
             <Link to="/shop" className="btn btn-outline">
               {t('cart.continueShopping')}
             </Link>

@@ -36,7 +36,16 @@ const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
+  },
+  isGuestOrder: {
+    type: Boolean,
+    default: false
+  },
+  guestInfo: {
+    name: String,
+    email: String,
+    phone: String
   },
   items: [orderItemSchema],
   subtotal: {
@@ -205,11 +214,12 @@ orderSchema.pre('save', function(next) {
   next();
 });
 
-orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ user: 1, createdAt: -1 }, { sparse: true });
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ 'guestInfo.email': 1, orderNumber: 1 });
 
 const Order = mongoose.model('Order', orderSchema);
 export default Order;

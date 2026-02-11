@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
-import { FiMapPin, FiCreditCard, FiCheck, FiInfo, FiUpload, FiX, FiImage, FiPackage, FiTruck } from 'react-icons/fi';
+import { FiMapPin, FiCreditCard, FiCheck, FiInfo, FiUpload, FiX, FiPackage } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { cartAPI, ordersAPI, authAPI } from '../services/api';
 import { useAuthStore, useCartStore, useLanguageStore } from '../store/useStore';
@@ -17,7 +17,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { language } = useLanguageStore();
   const { user, isAuthenticated } = useAuthStore();
-  const { clearCart } = useCartStore();
+  const localCart = useCartStore();
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(1);
@@ -35,6 +35,7 @@ const Checkout = () => {
     reset
   } = useForm();
 
+  // Fetch server cart only for authenticated users
   const { data: cartData, isLoading: cartLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: () => cartAPI.get(),
@@ -47,11 +48,12 @@ const Checkout = () => {
     enabled: isAuthenticated
   });
 
+  // Mutation for authenticated order
   const createOrderMutation = useMutation({
     mutationFn: (data) => ordersAPI.create(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries(['cart']);
-      clearCart();
+      localCart.clearCart();
       const { data: orderData } = response.data;
       navigate(`/order-success/${orderData.orderNumber}`);
     },
@@ -61,8 +63,40 @@ const Checkout = () => {
     }
   });
 
-  const cart = cartData?.data?.data;
+  // Mutation for guest order
+  const createGuestOrderMutation = useMutation({
+    mutationFn: (data) => ordersAPI.createGuest(data),
+    onSuccess: (response) => {
+      localCart.clearCart();
+      const { data: orderData } = response.data;
+      navigate(`/order-success/${orderData.orderNumber}`);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || t('messages.orderError'));
+      setLoading(false);
+    }
+  });
+
+  // Resolve cart data based on auth state
+  const serverCart = cartData?.data?.data;
   const addresses = userData?.data?.data?.addresses || [];
+
+  // Build a unified cart view
+  let cartItems, cartSubtotal, cartDiscount, cartTotal;
+  if (isAuthenticated && serverCart) {
+    cartItems = serverCart.items;
+    cartSubtotal = serverCart.subtotal || cartItems?.reduce((sum, i) => sum + i.price * i.quantity, 0) || 0;
+    cartDiscount = serverCart.discount || 0;
+    cartTotal = serverCart.total || (cartSubtotal - cartDiscount);
+  } else {
+    cartItems = localCart.items;
+    cartSubtotal = localCart.getSubtotal();
+    cartDiscount = localCart.discount;
+    cartTotal = localCart.getTotal();
+  }
+
+  const advanceAmount = Math.ceil(cartSubtotal / 2);
+  const finalAmount = cartSubtotal - advanceAmount;
 
   // Payment methods
   const paymentMethods = [
@@ -89,10 +123,6 @@ const Checkout = () => {
       accountHolder: 'Quratulain Syed'
     }
   ];
-
-  const total = cart?.total || 0;
-  const advanceAmount = Math.ceil((cart?.subtotal || 0) / 2);
-  const finalAmount = (cart?.subtotal || 0) - advanceAmount;
 
   const onAddressSubmit = (data) => {
     setSelectedAddress(data);
@@ -136,21 +166,66 @@ const Checkout = () => {
 
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append('shippingAddress', JSON.stringify(selectedAddress));
-    formData.append('paymentMethod', paymentMethod);
-    formData.append('notes', '');
-    formData.append('screenshot', paymentScreenshot);
+    if (isAuthenticated) {
+      // Authenticated user order from server cart
+      const formData = new FormData();
+      formData.append('shippingAddress', JSON.stringify(selectedAddress));
+      formData.append('paymentMethod', paymentMethod);
+      formData.append('notes', '');
+      formData.append('screenshot', paymentScreenshot);
+      createOrderMutation.mutate(formData);
+    } else {
+      // Guest order from localStorage cart
+      const formData = new FormData();
+      formData.append('shippingAddress', JSON.stringify(selectedAddress));
+      formData.append('paymentMethod', paymentMethod);
+      formData.append('notes', '');
+      formData.append('screenshot', paymentScreenshot);
 
-    createOrderMutation.mutate(formData);
+      // Send items from localStorage
+      const itemsForServer = localCart.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        ageRange: item.ageRange,
+        color: item.color
+      }));
+      formData.append('items', JSON.stringify(itemsForServer));
+
+      // Guest info
+      const guestInfo = {
+        name: selectedAddress.fullName,
+        email: selectedAddress.email,
+        phone: selectedAddress.phone
+      };
+      formData.append('guestInfo', JSON.stringify(guestInfo));
+
+      createGuestOrderMutation.mutate(formData);
+    }
   };
 
-  if (cartLoading) return <PageLoader />;
+  if (isAuthenticated && cartLoading) return <PageLoader />;
 
-  if (!cart || cart.items?.length === 0) {
+  // Check if cart is empty
+  const isEmpty = isAuthenticated
+    ? (!serverCart || serverCart.items?.length === 0)
+    : (localCart.items.length === 0);
+
+  if (isEmpty) {
     navigate('/cart');
     return null;
   }
+
+  // Helper to get item display info (server cart vs localStorage cart have different shapes)
+  const getItemImage = (item) => {
+    if (item.product?.images?.[0]?.url) return getImageUrl(item.product.images[0].url);
+    if (item.image) return getImageUrl(item.image);
+    return '';
+  };
+  const getItemName = (item) => {
+    if (item.product?.name) return item.product.name[language] || item.product.name.en;
+    return item.name || '';
+  };
+  const getItemPrice = (item) => item.price * item.quantity;
 
   return (
     <>
@@ -163,6 +238,13 @@ const Checkout = () => {
           {t('checkout.title')}
         </h1>
 
+        {/* Guest notice */}
+        {!isAuthenticated && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 text-sm text-blue-800">
+            You are checking out as a guest. An email will be required for order updates.
+          </div>
+        )}
+
         {/* How Payment Works - Compact Banner */}
         <div className="bg-gradient-to-r from-primary-50 to-pink-50 border border-primary-100 rounded-xl p-4 mb-8">
           <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-sm">
@@ -170,12 +252,12 @@ const Checkout = () => {
               <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">1</div>
               <span className="text-gray-700">Pay 50% Now</span>
             </div>
-            <div className="text-gray-300">→</div>
+            <div className="text-gray-300">&rarr;</div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">2</div>
               <span className="text-gray-700">We Verify & Start</span>
             </div>
-            <div className="text-gray-300">→</div>
+            <div className="text-gray-300">&rarr;</div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">3</div>
               <span className="text-gray-700">Pay 50% + Shipping on Delivery</span>
@@ -221,8 +303,8 @@ const Checkout = () => {
                   {t('checkout.shippingAddress')}
                 </h2>
 
-                {/* Saved Addresses */}
-                {addresses.length > 0 && (
+                {/* Saved Addresses - only for authenticated users */}
+                {isAuthenticated && addresses.length > 0 && (
                   <div className="mb-6">
                     <h3 className="font-medium text-gray-700 mb-3">{t('checkout.savedAddresses')}</h3>
                     <div className="space-y-3">
@@ -271,7 +353,7 @@ const Checkout = () => {
                         type="text"
                         {...register('fullName', { required: t('validation.required') })}
                         className={`input ${errors.fullName ? 'input-error' : ''}`}
-                        defaultValue={user?.name}
+                        defaultValue={isAuthenticated ? user?.name : ''}
                       />
                       {errors.fullName && (
                         <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>
@@ -286,13 +368,37 @@ const Checkout = () => {
                         type="tel"
                         {...register('phone', { required: t('validation.required') })}
                         className={`input ${errors.phone ? 'input-error' : ''}`}
-                        defaultValue={user?.phone}
+                        defaultValue={isAuthenticated ? user?.phone : ''}
                       />
                       {errors.phone && (
                         <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
                       )}
                     </div>
                   </div>
+
+                  {/* Email field - required for guests, optional for auth users */}
+                  {!isAuthenticated && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        {...register('email', {
+                          required: 'Email is required for guest checkout',
+                          pattern: {
+                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                            message: 'Please enter a valid email'
+                          }
+                        })}
+                        className={`input ${errors.email ? 'input-error' : ''}`}
+                        placeholder="your@email.com"
+                      />
+                      {errors.email && (
+                        <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                      )}
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -519,6 +625,7 @@ const Checkout = () => {
                     <p>{selectedAddress?.address}</p>
                     <p>{selectedAddress?.city}, {selectedAddress?.province} {selectedAddress?.postalCode}</p>
                     <p>{selectedAddress?.phone}</p>
+                    {selectedAddress?.email && <p>{selectedAddress.email}</p>}
                   </div>
                 </div>
 
@@ -547,25 +654,25 @@ const Checkout = () => {
                 <div className="bg-white rounded-xl shadow-sm p-5">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
                     <FiPackage className="w-4 h-4 text-primary-500" />
-                    Order Items ({cart?.items?.length})
+                    Order Items ({cartItems?.length})
                   </h3>
                   <div className="space-y-3">
-                    {cart?.items?.map((item) => (
-                      <div key={item._id} className="flex gap-3">
+                    {cartItems?.map((item, idx) => (
+                      <div key={item._id || item.id || idx} className="flex gap-3">
                         <img
-                          src={getImageUrl(item.product?.images?.[0]?.url)}
-                          alt={item.product?.name?.[language] || item.product?.name?.en}
+                          src={getItemImage(item)}
+                          alt={getItemName(item)}
                           className="w-14 h-14 object-cover rounded-lg"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">
-                            {item.product?.name?.[language] || item.product?.name?.en}
+                            {getItemName(item)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {item.ageRange} {item.color && `• ${item.color.name}`} • Qty: {item.quantity}
+                            {item.ageRange} {item.color && `\u2022 ${item.color.name}`} \u2022 Qty: {item.quantity}
                           </p>
                         </div>
-                        <p className="font-medium text-sm">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-medium text-sm">Rs. {getItemPrice(item).toLocaleString()}</p>
                       </div>
                     ))}
                   </div>
@@ -578,9 +685,9 @@ const Checkout = () => {
                     <div className="text-sm text-yellow-800">
                       <p className="font-semibold mb-1">What happens next?</p>
                       <ul className="space-y-1 text-yellow-700">
-                        <li>• We'll verify your payment within 24 hours</li>
-                        <li>• Your order will be prepared with care</li>
-                        <li>• Pay remaining Rs. {finalAmount.toLocaleString()} + shipping (Rs 350/kg) on delivery</li>
+                        <li>&bull; We'll verify your payment within 24 hours</li>
+                        <li>&bull; Your order will be prepared with care</li>
+                        <li>&bull; Pay remaining Rs. {finalAmount.toLocaleString()} + shipping (Rs 350/kg) on delivery</li>
                       </ul>
                     </div>
                   </div>
@@ -614,37 +721,37 @@ const Checkout = () => {
 
               {/* Cart Items Preview */}
               <div className="space-y-3 mb-4 pb-4 border-b">
-                {cart?.items?.slice(0, 3).map((item) => (
-                  <div key={item._id} className="flex gap-3">
+                {cartItems?.slice(0, 3).map((item, idx) => (
+                  <div key={item._id || item.id || idx} className="flex gap-3">
                     <img
-                      src={getImageUrl(item.product?.images?.[0]?.url)}
+                      src={getItemImage(item)}
                       alt=""
                       className="w-12 h-12 object-cover rounded"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {item.product?.name?.[language] || item.product?.name?.en}
+                        {getItemName(item)}
                       </p>
                       <p className="text-xs text-gray-500">x{item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                    <p className="text-sm font-medium">Rs. {getItemPrice(item).toLocaleString()}</p>
                   </div>
                 ))}
-                {cart?.items?.length > 3 && (
-                  <p className="text-xs text-gray-500 text-center">+{cart.items.length - 3} more items</p>
+                {cartItems?.length > 3 && (
+                  <p className="text-xs text-gray-500 text-center">+{cartItems.length - 3} more items</p>
                 )}
               </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t('cart.subtotal')}</span>
-                  <span className="font-medium">Rs. {cart?.subtotal?.toLocaleString()}</span>
+                  <span className="font-medium">Rs. {cartSubtotal?.toLocaleString()}</span>
                 </div>
 
-                {cart?.discount > 0 && (
+                {cartDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>{t('cart.discount')}</span>
-                    <span>-Rs. {cart?.discount?.toLocaleString()}</span>
+                    <span>-Rs. {cartDiscount?.toLocaleString()}</span>
                   </div>
                 )}
 
@@ -657,7 +764,7 @@ const Checkout = () => {
 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>{t('cart.total')}</span>
-                  <span className="text-primary-600">Rs. {total.toLocaleString()}</span>
+                  <span className="text-primary-600">Rs. {cartTotal.toLocaleString()}</span>
                 </div>
               </div>
 

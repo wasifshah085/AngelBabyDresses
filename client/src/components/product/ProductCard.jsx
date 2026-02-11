@@ -97,6 +97,11 @@ const ProductCard = ({ product }) => {
               {discountPercent === 'SALE' ? 'SALE' : `-${discountPercent}%`}
             </span>
           )}
+          {product.activeSale && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+              {product.activeSale.saleName?.[language] || product.activeSale.saleName?.en || 'SALE'}
+            </span>
+          )}
           {product.isNewArrival && (
             <span className="bg-primary-500 text-white text-xs font-bold px-2 py-1 rounded">
               NEW

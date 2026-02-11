@@ -2,6 +2,20 @@ import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Sale from '../models/Sale.js';
 import { paginate, getPaginationInfo, sanitizeSearchQuery } from '../utils/helpers.js';
+import { applySalesToProducts, applySaleToSingleProduct } from '../utils/applySales.js';
+
+// Helper function to check if product is on sale (works on plain objects after sales applied)
+const isProductOnSale = (product) => {
+  if (product.salePrice && typeof product.salePrice === 'number' && product.salePrice > 0 && product.salePrice < product.price) {
+    return true;
+  }
+  if (product.agePricing && product.agePricing.length > 0) {
+    return product.agePricing.some(ap =>
+      ap.salePrice && typeof ap.salePrice === 'number' && ap.salePrice > 0 && ap.salePrice < ap.price
+    );
+  }
+  return false;
+};
 
 // @desc    Get all products
 // @route   GET /api/products
@@ -63,8 +77,6 @@ export const getProducts = async (req, res) => {
       query.isNewArrival = true;
     }
 
-    // Note: onSale filtering is done after fetching products (see below)
-
     // Build sort
     let sortOption = { createdAt: -1 };
     if (sort) {
@@ -87,40 +99,28 @@ export const getProducts = async (req, res) => {
       }
     }
 
-    // Helper function to check if product is on sale
-    const isProductOnSale = (product) => {
-      // Check main sale price
-      if (product.salePrice && typeof product.salePrice === 'number' && product.salePrice > 0 && product.salePrice < product.price) {
-        return true;
-      }
-      // Check agePricing sale prices
-      if (product.agePricing && product.agePricing.length > 0) {
-        return product.agePricing.some(ap =>
-          ap.salePrice && typeof ap.salePrice === 'number' && ap.salePrice > 0 && ap.salePrice < ap.price
-        );
-      }
-      return false;
-    };
-
     let products;
     let total;
 
     if (onSale === 'true') {
-      // For sale products, fetch all matching query then filter
+      // For sale products, fetch all, apply dynamic sales, then filter
       const allProducts = await Product.find(query)
         .populate('category', 'name slug')
         .sort(sortOption);
 
-      const saleProducts = allProducts.filter(isProductOnSale);
+      const withSales = await applySalesToProducts(allProducts);
+      const saleProducts = withSales.filter(isProductOnSale);
       total = saleProducts.length;
       products = saleProducts.slice(skip, skip + limit);
     } else {
       total = await Product.countDocuments(query);
-      products = await Product.find(query)
+      const rawProducts = await Product.find(query)
         .populate('category', 'name slug')
         .sort(sortOption)
         .skip(skip)
         .limit(limit);
+
+      products = await applySalesToProducts(rawProducts);
     }
 
     res.json({
@@ -155,9 +155,11 @@ export const getProduct = async (req, res) => {
     product.viewCount += 1;
     await product.save();
 
+    const productWithSale = await applySaleToSingleProduct(product);
+
     res.json({
       success: true,
-      data: product
+      data: productWithSale
     });
   } catch (error) {
     res.status(500).json({
@@ -174,10 +176,12 @@ export const getFeaturedProducts = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
 
-    const products = await Product.find({ isActive: true, featured: true })
+    const rawProducts = await Product.find({ isActive: true, featured: true })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .limit(limit);
+
+    const products = await applySalesToProducts(rawProducts);
 
     res.json({
       success: true,
@@ -198,10 +202,12 @@ export const getNewArrivals = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
 
-    const products = await Product.find({ isActive: true, isNewArrival: true })
+    const rawProducts = await Product.find({ isActive: true, isNewArrival: true })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .limit(limit);
+
+    const products = await applySalesToProducts(rawProducts);
 
     res.json({
       success: true,
@@ -222,10 +228,12 @@ export const getBestSellers = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
 
-    const products = await Product.find({ isActive: true, isBestSeller: true })
+    const rawProducts = await Product.find({ isActive: true, isBestSeller: true })
       .populate('category', 'name slug')
       .sort({ soldCount: -1 })
       .limit(limit);
+
+    const products = await applySalesToProducts(rawProducts);
 
     res.json({
       success: true,
@@ -246,25 +254,15 @@ export const getSaleProducts = async (req, res) => {
   try {
     const { page, limit, skip } = paginate(req.query.page, req.query.limit);
 
-    // Get all active products and filter in JS for accurate sale detection
-    const products = await Product.find({ isActive: true })
+    // Get all active products, apply dynamic sales, then filter
+    const rawProducts = await Product.find({ isActive: true })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 });
 
-    // Filter to only include products that actually have valid sale prices
-    const saleProducts = products.filter(product => {
-      // Check main sale price (must be a number greater than 0 and less than price)
-      if (product.salePrice && typeof product.salePrice === 'number' && product.salePrice > 0 && product.salePrice < product.price) {
-        return true;
-      }
-      // Check agePricing sale prices
-      if (product.agePricing && product.agePricing.length > 0) {
-        return product.agePricing.some(ap =>
-          ap.salePrice && typeof ap.salePrice === 'number' && ap.salePrice > 0 && ap.salePrice < ap.price
-        );
-      }
-      return false;
-    });
+    const withSales = await applySalesToProducts(rawProducts);
+
+    // Filter to only include products that have valid sale prices (manual or dynamic)
+    const saleProducts = withSales.filter(isProductOnSale);
 
     const total = saleProducts.length;
     const paginatedProducts = saleProducts.slice(skip, skip + limit);
@@ -312,11 +310,13 @@ export const searchProducts = async (req, res) => {
     };
 
     const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
+    const rawProducts = await Product.find(query)
       .populate('category', 'name slug')
       .sort({ 'ratings.average': -1 })
       .skip(skip)
       .limit(limit);
+
+    const products = await applySalesToProducts(rawProducts);
 
     res.json({
       success: true,
@@ -347,7 +347,7 @@ export const getRelatedProducts = async (req, res) => {
 
     const limit = parseInt(req.query.limit) || 4;
 
-    const relatedProducts = await Product.find({
+    const rawProducts = await Product.find({
       _id: { $ne: product._id },
       isActive: true,
       $or: [
@@ -357,6 +357,8 @@ export const getRelatedProducts = async (req, res) => {
     })
       .populate('category', 'name slug')
       .limit(limit);
+
+    const relatedProducts = await applySalesToProducts(rawProducts);
 
     res.json({
       success: true,
@@ -393,11 +395,13 @@ export const getProductsByCategory = async (req, res) => {
     const query = { isActive: true, category: { $in: categoryIds } };
 
     const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
+    const rawProducts = await Product.find(query)
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+
+    const products = await applySalesToProducts(rawProducts);
 
     res.json({
       success: true,

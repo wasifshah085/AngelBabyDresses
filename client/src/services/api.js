@@ -25,8 +25,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+      // Only redirect to login if user was actually authenticated
+      const { isAuthenticated } = useAuthStore.getState();
+      if (isAuthenticated) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -94,6 +98,13 @@ export const ordersAPI = {
     }
     return api.post('/orders', data);
   },
+  createGuest: (data) => {
+    if (data instanceof FormData) {
+      return api.post('/orders/guest', data);
+    }
+    return api.post('/orders/guest', data);
+  },
+  lookupGuestOrder: (orderNumber, email) => api.post('/orders/guest/lookup', { orderNumber, email }),
   getMyOrders: () => api.get('/orders/my-orders'),
   getById: (id) => api.get(`/orders/${id}`),
   track: (orderNumber) => api.get(`/orders/track/${orderNumber}`),

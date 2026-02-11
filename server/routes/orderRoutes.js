@@ -8,7 +8,9 @@ import {
   cancelOrder,
   submitAdvancePayment,
   submitFinalPayment,
-  getPaymentAccounts
+  getPaymentAccounts,
+  createGuestOrder,
+  getGuestOrder
 } from '../controllers/orderController.js';
 import { protect } from '../middleware/auth.js';
 import validate from '../middleware/validate.js';
@@ -28,6 +30,8 @@ const createOrderValidation = [
 // Public routes
 router.get('/track/:orderNumber', trackOrder);
 router.get('/payment-accounts', getPaymentAccounts);
+router.post('/guest', upload.single('screenshot'), createGuestOrder);
+router.post('/guest/lookup', getGuestOrder);
 
 // Protected routes
 router.use(protect);
