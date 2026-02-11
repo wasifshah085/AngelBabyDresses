@@ -92,16 +92,15 @@ const ProductCard = ({ product }) => {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-          {hasDiscount && (
-            <span className="sale-badge">
-              {discountPercent === 'SALE' ? 'SALE' : `-${discountPercent}%`}
-            </span>
-          )}
-          {product.activeSale && (
+          {product.activeSale ? (
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
               {product.activeSale.saleName?.[language] || product.activeSale.saleName?.en || 'SALE'}
             </span>
-          )}
+          ) : hasDiscount ? (
+            <span className="sale-badge">
+              {discountPercent === 'SALE' ? 'SALE' : `-${discountPercent}%`}
+            </span>
+          ) : null}
           {product.isNewArrival && (
             <span className="bg-primary-500 text-white text-xs font-bold px-2 py-1 rounded">
               NEW
