@@ -106,13 +106,21 @@ const Sales = () => {
 
   const onSubmit = (data) => {
     setLoading(true);
+    // Set startDate to beginning of day and endDate to end of day
+    // so a sale ending "today" stays active all day
+    const startDate = new Date(data.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(data.endDate);
+    endDate.setHours(23, 59, 59, 999);
+
     const saleData = {
       name: { en: data.name, ur: data.name },
       type: 'percentage',
       discountValue: Number(data.discount),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      isActive: data.isActive,
+      applicableTo: 'all',
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      isActive: data.isActive !== false,
       sendPromotionalEmails: !editingSale && data.sendPromotionalEmails
     };
 
@@ -137,10 +145,15 @@ const Sales = () => {
   };
 
   const isActive = (sale) => {
+    if (!sale.isActive) return false;
     const now = new Date();
     const start = new Date(sale.startDate);
     const end = new Date(sale.endDate);
-    return sale.isActive && now >= start && now <= end;
+    // If endDate was stored without time (midnight UTC), treat it as end-of-day
+    if (end.getHours() === 0 && end.getMinutes() === 0 && end.getSeconds() === 0) {
+      end.setHours(23, 59, 59, 999);
+    }
+    return now >= start && now <= end;
   };
 
   if (isLoading) return <PageLoader />;
