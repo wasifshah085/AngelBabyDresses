@@ -1,5 +1,5 @@
 import CustomDesign from '../models/CustomDesign.js';
-import { cloudinary } from '../config/cloudinary.js';
+import imagekit from '../config/imagekit.js';
 import { sendEmail, emailTemplates } from '../services/emailService.js';
 import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappService.js';
 
@@ -47,16 +47,15 @@ export const createCustomDesign = async (req, res) => {
     if (req.files && req.files.length > 0) {
       designData.uploadedImages = [];
       for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(
-          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-          {
-            folder: 'angel-baby-dresses/custom-designs',
-            transformation: [{ width: 2000, height: 2000, crop: 'limit', quality: 'auto' }]
-          }
-        );
+        const result = await imagekit.upload({
+          file: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          fileName: `${Date.now()}-${file.originalname || 'design.jpg'}`,
+          folder: 'angel-baby-dresses/custom-designs',
+          useUniqueFileName: true
+        });
         designData.uploadedImages.push({
-          url: result.secure_url,
-          publicId: result.public_id
+          url: result.url,
+          publicId: result.fileId
         });
       }
     }
@@ -153,13 +152,15 @@ export const addMessage = async (req, res) => {
     if (req.files && req.files.length > 0) {
       messageData.attachments = [];
       for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(
-          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-          { folder: 'angel-baby-dresses/custom-designs/messages' }
-        );
+        const result = await imagekit.upload({
+          file: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          fileName: `${Date.now()}-${file.originalname || 'attachment.jpg'}`,
+          folder: 'angel-baby-dresses/custom-designs/messages',
+          useUniqueFileName: true
+        });
         messageData.attachments.push({
-          url: result.secure_url,
-          publicId: result.public_id
+          url: result.url,
+          publicId: result.fileId
         });
       }
     }

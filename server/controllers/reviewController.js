@@ -115,19 +115,18 @@ export const createReview = async (req, res) => {
     // Handle image uploads
     let reviewImages = [];
     if (req.files && req.files.length > 0) {
-      const { cloudinary } = await import('../config/cloudinary.js');
+      const { default: imagekit } = await import('../config/imagekit.js');
 
       for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(
-          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-          {
-            folder: 'angel-baby-dresses/reviews',
-            transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }]
-          }
-        );
+        const result = await imagekit.upload({
+          file: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          fileName: `${Date.now()}-${file.originalname || 'review.jpg'}`,
+          folder: 'angel-baby-dresses/reviews',
+          useUniqueFileName: true
+        });
         reviewImages.push({
-          url: result.secure_url,
-          publicId: result.public_id
+          url: result.url,
+          publicId: result.fileId
         });
       }
     }

@@ -84,18 +84,17 @@ export const createOrder = async (req, res) => {
     // Handle screenshot upload if provided
     let screenshotData = null;
     if (screenshot) {
-      const { cloudinary } = await import('../config/cloudinary.js');
-
-      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder') {
-        const result = await cloudinary.uploader.upload(
-          `data:${screenshot.mimetype};base64,${screenshot.buffer.toString('base64')}`,
-          { folder: 'angel-baby-dresses/payments' }
-        );
-        screenshotData = {
-          url: result.secure_url,
-          publicId: result.public_id
-        };
-      }
+      const { default: imagekit } = await import('../config/imagekit.js');
+      const result = await imagekit.upload({
+        file: `data:${screenshot.mimetype};base64,${screenshot.buffer.toString('base64')}`,
+        fileName: `${Date.now()}-payment.jpg`,
+        folder: 'angel-baby-dresses/payments',
+        useUniqueFileName: true
+      });
+      screenshotData = {
+        url: result.url,
+        publicId: result.fileId
+      };
     }
 
     // Create order with screenshot if provided
@@ -340,20 +339,18 @@ export const submitAdvancePayment = async (req, res) => {
       });
     }
 
-    // Save screenshot (using local storage or cloudinary based on config)
-    let screenshotData;
-    const { cloudinary } = await import('../config/cloudinary.js');
-
-    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder') {
-      const result = await cloudinary.uploader.upload(
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
-        { folder: 'angel-baby-dresses/payments' }
-      );
-      screenshotData = {
-        url: result.secure_url,
-        publicId: result.public_id
-      };
-    }
+    // Save screenshot
+    const { default: imagekit } = await import('../config/imagekit.js');
+    const advResult = await imagekit.upload({
+      file: `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+      fileName: `${Date.now()}-advance-payment.jpg`,
+      folder: 'angel-baby-dresses/payments',
+      useUniqueFileName: true
+    });
+    const screenshotData = {
+      url: advResult.url,
+      publicId: advResult.fileId
+    };
 
     order.advancePayment.screenshot = screenshotData;
     order.advancePayment.status = 'submitted';
@@ -433,19 +430,17 @@ export const submitFinalPayment = async (req, res) => {
     }
 
     // Save screenshot
-    let screenshotData;
-    const { cloudinary } = await import('../config/cloudinary.js');
-
-    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder') {
-      const result = await cloudinary.uploader.upload(
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
-        { folder: 'angel-baby-dresses/payments' }
-      );
-      screenshotData = {
-        url: result.secure_url,
-        publicId: result.public_id
-      };
-    }
+    const { default: imagekitFinal } = await import('../config/imagekit.js');
+    const finalResult = await imagekitFinal.upload({
+      file: `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+      fileName: `${Date.now()}-final-payment.jpg`,
+      folder: 'angel-baby-dresses/payments',
+      useUniqueFileName: true
+    });
+    const screenshotData = {
+      url: finalResult.url,
+      publicId: finalResult.fileId
+    };
 
     order.finalPayment.screenshot = screenshotData;
     order.finalPayment.status = 'submitted';
@@ -658,17 +653,17 @@ export const createGuestOrder = async (req, res) => {
     // Handle screenshot upload
     let screenshotData = null;
     if (screenshot) {
-      const { cloudinary } = await import('../config/cloudinary.js');
-      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'placeholder') {
-        const result = await cloudinary.uploader.upload(
-          `data:${screenshot.mimetype};base64,${screenshot.buffer.toString('base64')}`,
-          { folder: 'angel-baby-dresses/payments' }
-        );
-        screenshotData = {
-          url: result.secure_url,
-          publicId: result.public_id
-        };
-      }
+      const { default: imagekitGuest } = await import('../config/imagekit.js');
+      const guestResult = await imagekitGuest.upload({
+        file: `data:${screenshot.mimetype};base64,${screenshot.buffer.toString('base64')}`,
+        fileName: `${Date.now()}-payment.jpg`,
+        folder: 'angel-baby-dresses/payments',
+        useUniqueFileName: true
+      });
+      screenshotData = {
+        url: guestResult.url,
+        publicId: guestResult.fileId
+      };
     }
 
     const order = await Order.create({

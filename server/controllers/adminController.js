@@ -7,46 +7,39 @@ import Sale from '../models/Sale.js';
 import Coupon from '../models/Coupon.js';
 import Review from '../models/Review.js';
 import Setting from '../models/Setting.js';
-import { cloudinary } from '../config/cloudinary.js';
+import imagekit from '../config/imagekit.js';
 import { paginate, getPaginationInfo } from '../utils/helpers.js';
 import { sendEmail, emailTemplates } from '../services/emailService.js';
 import { sendWhatsAppMessage, whatsappMessages } from '../services/whatsappService.js';
-// Helper function to upload file to Cloudinary
-const uploadToCloudinary = async (file, folder) => {
-  console.log('uploadToCloudinary called:', { folder, mimetype: file.mimetype, size: file.buffer?.length });
-  console.log('Cloudinary config:', {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'set' : 'missing',
-    api_key: process.env.CLOUDINARY_API_KEY ? 'set' : 'missing'
-  });
 
+// Helper function to upload file to ImageKit
+const uploadToCloudinary = async (file, folder) => {
   try {
-    const result = await cloudinary.uploader.upload(
-      `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-      {
-        folder: `angel-baby-dresses/${folder}`,
-        transformation: folder === 'products'
-          ? [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }]
-          : undefined
-      }
-    );
-    console.log('Cloudinary upload success:', result.secure_url);
+    const base64 = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    const fileName = `${Date.now()}-${file.originalname || 'image.jpg'}`;
+    const result = await imagekit.upload({
+      file: base64,
+      fileName,
+      folder: `angel-baby-dresses/${folder}`,
+      useUniqueFileName: true
+    });
     return {
-      url: result.secure_url,
-      publicId: result.public_id
+      url: result.url,
+      publicId: result.fileId
     };
   } catch (error) {
-    console.error('Cloudinary upload error:', error.message, error);
+    console.error('ImageKit upload error:', error.message, error);
     throw error;
   }
 };
 
-// Helper function to delete file from Cloudinary (skips old local_ references)
-const deleteCloudinaryFile = async (publicId) => {
-  if (!publicId || publicId.startsWith('local_')) return;
+// Helper function to delete file from ImageKit
+const deleteCloudinaryFile = async (fileId) => {
+  if (!fileId || fileId.startsWith('local_')) return;
   try {
-    await cloudinary.uploader.destroy(publicId);
+    await imagekit.deleteFile(fileId);
   } catch (e) {
-    console.error('Error deleting from Cloudinary:', e.message);
+    console.error('Error deleting from ImageKit:', e.message);
   }
 };
 
@@ -1551,13 +1544,15 @@ export const addDesignMessage = async (req, res) => {
     if (req.files && req.files.length > 0) {
       messageData.attachments = [];
       for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(
-          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
-          { folder: 'angel-baby-dresses/custom-designs/messages' }
-        );
+        const result = await imagekit.upload({
+          file: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          fileName: `${Date.now()}-${file.originalname || 'attachment.jpg'}`,
+          folder: 'angel-baby-dresses/custom-designs/messages',
+          useUniqueFileName: true
+        });
         messageData.attachments.push({
-          url: result.secure_url,
-          publicId: result.public_id
+          url: result.url,
+          publicId: result.fileId
         });
       }
     }
