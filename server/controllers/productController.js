@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Sale from '../models/Sale.js';
@@ -142,8 +143,8 @@ export const getProducts = async (req, res) => {
 // @access  Public
 export const getProduct = async (req, res) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug, isActive: true })
-      .populate('category', 'name slug');
+    // Use lean() to bypass Mongoose hydration/cast errors on potentially corrupted documents
+    const product = await Product.findOne({ slug: req.params.slug, isActive: true }).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -152,9 +153,20 @@ export const getProduct = async (req, res) => {
       });
     }
 
-    // Increment view count
-    product.viewCount += 1;
-    await product.save();
+    // Populate category separately so a corrupted category field never kills the response
+    try {
+      if (product.category) {
+        const cat = await Category.findById(product.category).lean().select('name slug');
+        product.category = cat || null;
+      }
+    } catch (e) {
+      product.category = null;
+    }
+
+    // Increment view count (fire-and-forget, non-critical)
+    Product.updateOne({ _id: product._id }, { $inc: { viewCount: 1 } }).catch(e =>
+      console.error('viewCount update error for', req.params.slug, e.message)
+    );
 
     const productWithSale = await applySaleToSingleProduct(product);
 
@@ -342,7 +354,7 @@ export const searchProducts = async (req, res) => {
 // @access  Public
 export const getRelatedProducts = async (req, res) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug });
+    const product = await Product.findOne({ slug: req.params.slug }).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -353,14 +365,23 @@ export const getRelatedProducts = async (req, res) => {
 
     const limit = parseInt(req.query.limit) || 4;
 
-    const rawProducts = await Product.find({
+    // Only use category/tags for the related query if they look like valid ObjectIds
+    const orConditions = [];
+    const rawCat = product.category?._id || product.category;
+    if (rawCat && mongoose.isValidObjectId(rawCat)) {
+      orConditions.push({ category: rawCat });
+    }
+    if (Array.isArray(product.tags) && product.tags.length > 0) {
+      orConditions.push({ tags: { $in: product.tags } });
+    }
+
+    const relatedQuery = {
       _id: { $ne: product._id },
       isActive: true,
-      $or: [
-        { category: product.category },
-        { tags: { $in: product.tags } }
-      ]
-    })
+      ...(orConditions.length > 0 ? { $or: orConditions } : {})
+    };
+
+    const rawProducts = await Product.find(relatedQuery)
       .populate('category', 'name slug')
       .limit(limit);
 
@@ -384,6 +405,7 @@ export const getRelatedProducts = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   try {
     const { page, limit, skip } = paginate(req.query.page, req.query.limit);
+    const { minPrice, maxPrice, sort } = req.query;
 
     const category = await Category.findOne({ slug: req.params.slug });
 
@@ -400,10 +422,27 @@ export const getProductsByCategory = async (req, res) => {
 
     const query = { isActive: true, category: { $in: categoryIds } };
 
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = parseFloat(minPrice);
+      if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sort) {
+      switch (sort) {
+        case 'price_asc': sortOption = { price: 1 }; break;
+        case 'price_desc': sortOption = { price: -1 }; break;
+        case 'popular': sortOption = { soldCount: -1 }; break;
+        case 'rating': sortOption = { 'ratings.average': -1 }; break;
+        default: sortOption = { createdAt: -1 };
+      }
+    }
+
     const total = await Product.countDocuments(query);
     const rawProducts = await Product.find(query)
       .populate('category', 'name slug')
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(limit);
 

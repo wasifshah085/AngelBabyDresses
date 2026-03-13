@@ -36,7 +36,7 @@ const Sales = () => {
   const createMutation = useMutation({
     mutationFn: (data) => managementAPI.createSale(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-sales']);
+      queryClient.invalidateQueries({ queryKey: ['admin-sales'] });
       toast.success(t('admin.saleCreated'));
       closeModal();
     },
@@ -49,7 +49,7 @@ const Sales = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => managementAPI.updateSale(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-sales']);
+      queryClient.invalidateQueries({ queryKey: ['admin-sales'] });
       toast.success(t('admin.saleUpdated'));
       closeModal();
     },
@@ -62,7 +62,7 @@ const Sales = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => managementAPI.deleteSale(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-sales']);
+      queryClient.invalidateQueries({ queryKey: ['admin-sales'] });
       toast.success(t('admin.saleDeleted'));
     },
     onError: (error) => {

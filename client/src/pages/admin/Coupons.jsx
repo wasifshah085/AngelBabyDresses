@@ -39,7 +39,7 @@ const Coupons = () => {
   const createMutation = useMutation({
     mutationFn: (data) => managementAPI.createCoupon(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-coupons']);
+      queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       toast.success(t('admin.couponCreated'));
       closeModal();
     },
@@ -52,7 +52,7 @@ const Coupons = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => managementAPI.updateCoupon(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-coupons']);
+      queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       toast.success(t('admin.couponUpdated'));
       closeModal();
     },
@@ -65,7 +65,7 @@ const Coupons = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => managementAPI.deleteCoupon(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-coupons']);
+      queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       toast.success(t('admin.couponDeleted'));
     },
     onError: (error) => {

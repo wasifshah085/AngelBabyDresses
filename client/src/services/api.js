@@ -60,7 +60,7 @@ export const productsAPI = {
   getFeatured: (limit = 8) => api.get('/products/featured', { params: { limit } }),
   getNewArrivals: (limit = 8) => api.get('/products/new-arrivals', { params: { limit } }),
   getBestSellers: (limit = 8) => api.get('/products/best-sellers', { params: { limit } }),
-  getSale: (limit = 12) => api.get('/products/sale', { params: { limit } }),
+  getSale: (params) => api.get('/products/sale', { params }),
   search: (query, params) => api.get('/products/search', { params: { q: query, ...params } }),
   getByCategory: (slug, params) => api.get(`/products/category/${slug}`, { params }),
   getRelated: (slug, limit = 4) => api.get(`/products/${slug}/related`, { params: { limit } })

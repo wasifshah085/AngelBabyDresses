@@ -98,8 +98,8 @@ const ProductDetail = () => {
   const wishlistMutation = useMutation({
     mutationFn: () => authAPI.toggleWishlist(product._id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['wishlist']);
-      queryClient.invalidateQueries(['product', slug]);
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      queryClient.invalidateQueries({ queryKey: ['product', slug] });
       toast.success(t('messages.wishlistUpdated'));
     }
   });
@@ -114,7 +114,7 @@ const ProductDetail = () => {
       return reviewsAPI.create(formData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['reviews', slug]);
+      queryClient.invalidateQueries({ queryKey: ['reviews', slug] });
       toast.success(t('messages.reviewSubmitted', { defaultValue: 'Review submitted successfully!' }));
       setShowReviewModal(false);
       setReviewRating(5);
@@ -129,7 +129,7 @@ const ProductDetail = () => {
   const addToCartMutation = useMutation({
     mutationFn: (data) => cartAPI.add(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success(t('messages.addedToCart'));
       openCartDrawer();
     },

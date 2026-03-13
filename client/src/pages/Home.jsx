@@ -29,7 +29,7 @@ const HERO_SLIDES_DATA = [
     id: 'hero-2',
     titleKey: 'hero.newCollection',
     subtitleKey: 'hero.newCollectionSubtitle',
-    image: 'https://res.cloudinary.com/dcyhozh68/image/upload/v1770321695/angel-baby-dresses/hero/new-collection.png',
+    image: 'https://ik.imagekit.io/tcdiy27hs/angel-baby-dresses/hero/new-collection.png?updatedAt=1772806337854',
     ctaKey: 'common.viewAll',
     link: '/shop?filter=new'
   },
@@ -37,7 +37,7 @@ const HERO_SLIDES_DATA = [
     id: 'hero-3',
     titleKey: 'hero.customDesigns',
     subtitleKey: 'hero.customDesignsSubtitle',
-    image: 'https://res.cloudinary.com/dcyhozh68/image/upload/v1770321697/angel-baby-dresses/hero/mother-daughter.png',
+    image: 'https://ik.imagekit.io/tcdiy27hs/angel-baby-dresses/hero/mother-daughter.png?updatedAt=1772806336499',
     ctaKey: 'hero.customDesign',
     link: '/custom-design'
   }

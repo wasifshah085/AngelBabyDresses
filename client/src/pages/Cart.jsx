@@ -39,13 +39,13 @@ const Cart = () => {
 
   const updateMutation = useMutation({
     mutationFn: (data) => cartAPI.update(data),
-    onSuccess: () => queryClient.invalidateQueries(['cart'])
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] })
   });
 
   const removeMutation = useMutation({
     mutationFn: (itemId) => cartAPI.remove(itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success(t('messages.itemRemoved'));
     }
   });
@@ -53,7 +53,7 @@ const Cart = () => {
   const applyCouponMutation = useMutation({
     mutationFn: (code) => cartAPI.applyCoupon(code),
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success(t('messages.couponApplied'));
     },
     onError: (error) => {
@@ -64,7 +64,7 @@ const Cart = () => {
   const removeCouponMutation = useMutation({
     mutationFn: () => cartAPI.removeCoupon(),
     onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success(t('messages.couponRemoved'));
     }
   });

@@ -135,7 +135,7 @@ const ProductForm = () => {
   const createMutation = useMutation({
     mutationFn: (data) => managementAPI.createProduct(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success(t('admin.productCreated'));
       navigate('/admin/products');
     },
@@ -148,8 +148,8 @@ const ProductForm = () => {
   const updateMutation = useMutation({
     mutationFn: (data) => managementAPI.updateProduct(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
-      queryClient.invalidateQueries(['admin-product', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product', id] });
       toast.success(t('admin.productUpdated'));
       navigate('/admin/products');
     },

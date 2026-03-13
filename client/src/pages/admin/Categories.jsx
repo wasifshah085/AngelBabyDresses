@@ -58,7 +58,7 @@ const Categories = () => {
   const createMutation = useMutation({
     mutationFn: (data) => managementAPI.createCategory(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-categories']);
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       toast.success(t('admin.categoryCreated'));
       closeModal();
     },
@@ -71,7 +71,7 @@ const Categories = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => managementAPI.updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-categories']);
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       toast.success(t('admin.categoryUpdated'));
       closeModal();
     },
@@ -84,7 +84,7 @@ const Categories = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => managementAPI.deleteCategory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-categories']);
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       toast.success(t('admin.categoryDeleted'));
     },
     onError: (error) => {

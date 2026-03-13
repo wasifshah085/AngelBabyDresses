@@ -40,7 +40,7 @@ const Reviews = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => managementAPI.updateReview(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-reviews']);
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
       toast.success(t('admin.reviewUpdated'));
     },
     onError: (error) => {
@@ -51,7 +51,7 @@ const Reviews = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => managementAPI.deleteReview(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-reviews']);
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
       toast.success(t('admin.reviewDeleted'));
     },
     onError: (error) => {

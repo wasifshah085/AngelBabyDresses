@@ -40,7 +40,7 @@ const Products = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => managementAPI.deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success(t('admin.productDeleted'));
     },
     onError: (error) => {

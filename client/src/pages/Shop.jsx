@@ -24,7 +24,7 @@ const Shop = () => {
   const categorySlug = searchParams.get('category') || '';
   const page = parseInt(searchParams.get('page')) || 1;
 
-  const { data: productsData, isLoading } = useQuery({
+  const { data: productsData, isLoading, isError } = useQuery({
     queryKey: ['products', filters, query, filterType, categorySlug, page],
     queryFn: () => {
       if (query) {
@@ -33,10 +33,13 @@ const Shop = () => {
       if (filterType === 'sale') {
         return productsAPI.getSale({ ...filters, page });
       }
+      if (filterType === 'new') {
+        return productsAPI.getAll({ ...filters, newArrivals: true, page });
+      }
       if (categorySlug) {
         return productsAPI.getByCategory(categorySlug, { ...filters, page });
       }
-      return productsAPI.getAll({ ...filters, filter: filterType, page });
+      return productsAPI.getAll({ ...filters, page });
     }
   });
 
@@ -192,6 +195,10 @@ const Shop = () => {
           <div className="flex-1">
             {isLoading ? (
               <PageLoader />
+            ) : isError ? (
+              <div className="text-center py-16">
+                <p className="text-gray-500">{t('common.categoryNotFound', { defaultValue: 'Category not found or no products available.' })}</p>
+              </div>
             ) : products.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-gray-500">{t('common.noProducts', { defaultValue: 'No products found' })}</p>

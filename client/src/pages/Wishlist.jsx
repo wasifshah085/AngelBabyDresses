@@ -26,7 +26,7 @@ const Wishlist = () => {
   const removeFromWishlistMutation = useMutation({
     mutationFn: (productId) => authAPI.toggleWishlist(productId),
     onSuccess: () => {
-      queryClient.invalidateQueries(['wishlist']);
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
       toast.success(t('messages.removedFromWishlist'));
     }
   });
@@ -34,7 +34,7 @@ const Wishlist = () => {
   const addToCartMutation = useMutation({
     mutationFn: (data) => cartAPI.add(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success(t('messages.addedToCart'));
       openCartDrawer();
     }

@@ -52,7 +52,7 @@ const Checkout = () => {
   const createOrderMutation = useMutation({
     mutationFn: (data) => ordersAPI.create(data),
     onSuccess: (response) => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       localCart.clearCart();
       const { data: orderData } = response.data;
       navigate(`/order-success/${orderData.orderNumber}`);

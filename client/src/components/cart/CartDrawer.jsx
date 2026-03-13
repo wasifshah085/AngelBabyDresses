@@ -25,12 +25,12 @@ const CartDrawer = () => {
 
   const updateMutation = useMutation({
     mutationFn: (data) => cartAPI.update(data),
-    onSuccess: () => queryClient.invalidateQueries(['cart'])
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] })
   });
 
   const removeMutation = useMutation({
     mutationFn: (itemId) => cartAPI.remove(itemId),
-    onSuccess: () => queryClient.invalidateQueries(['cart'])
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] })
   });
 
   // Get cart items based on auth status

@@ -155,7 +155,7 @@ const DesignDetail = () => {
   const messageMutation = useMutation({
     mutationFn: (data) => customDesignAPI.addMessage(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['design', id]);
+      queryClient.invalidateQueries({ queryKey: ['design', id] });
       setMessage('');
       setAttachments([]);
       setSending(false);
@@ -169,7 +169,7 @@ const DesignDetail = () => {
   const acceptMutation = useMutation({
     mutationFn: (data) => customDesignAPI.acceptQuote(id, data),
     onSuccess: (response) => {
-      queryClient.invalidateQueries(['design', id]);
+      queryClient.invalidateQueries({ queryKey: ['design', id] });
       toast.success(t('customDesign.quoteAccepted') || 'Quote accepted! Please pay the advance amount.');
       setShowAcceptForm(false);
     },
@@ -181,7 +181,7 @@ const DesignDetail = () => {
   const cancelMutation = useMutation({
     mutationFn: () => customDesignAPI.cancel(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['design', id]);
+      queryClient.invalidateQueries({ queryKey: ['design', id] });
       toast.success(t('customDesign.designCancelled'));
     },
     onError: (error) => {
@@ -192,7 +192,7 @@ const DesignDetail = () => {
   const paymentMutation = useMutation({
     mutationFn: (file) => ordersAPI.submitAdvancePayment(design.order._id || design.order, file),
     onSuccess: () => {
-      queryClient.invalidateQueries(['design', id]);
+      queryClient.invalidateQueries({ queryKey: ['design', id] });
       setPaymentScreenshot(null);
       setUploading(false);
       toast.success(t('orders.paymentSubmitted') || 'Payment submitted! Waiting for verification.');

@@ -54,8 +54,8 @@ const ProductCard = ({ product }) => {
   const wishlistMutation = useMutation({
     mutationFn: () => authAPI.toggleWishlist(product._id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['wishlist']);
-      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(
         isInWishlist ? t('messages.removedFromWishlist') : t('messages.addedToWishlist')
       );

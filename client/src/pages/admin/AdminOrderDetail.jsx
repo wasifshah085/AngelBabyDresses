@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -40,17 +40,32 @@ const AdminOrderDetail = () => {
   const [weightKg, setWeightKg] = useState(1);
   const [showShippingModal, setShowShippingModal] = useState(false);
 
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-order', id],
     queryFn: () => managementAPI.getOrderById(id)
   });
 
+  const order = data?.data?.data;
+
+  // Reset form whenever order data changes (after refetch)
+  useEffect(() => {
+    if (order) {
+      reset({
+        status: order.status,
+        shippingCarrier: order.shippingCarrier || '',
+        trackingNumber: order.trackingNumber || '',
+        trackingUrl: order.trackingUrl || '',
+        adminNotes: order.adminNotes || ''
+      });
+    }
+  }, [order, reset]);
+
   const updateMutation = useMutation({
     mutationFn: (data) => managementAPI.updateOrderStatus(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success(t('admin.orderUpdated'));
       setUpdating(false);
     },
@@ -63,7 +78,7 @@ const AdminOrderDetail = () => {
   const approveAdvanceMutation = useMutation({
     mutationFn: () => managementAPI.approveAdvancePayment(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success('Advance payment approved!');
     },
     onError: (error) => {
@@ -74,7 +89,7 @@ const AdminOrderDetail = () => {
   const rejectAdvanceMutation = useMutation({
     mutationFn: (reason) => managementAPI.rejectAdvancePayment(id, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success('Advance payment rejected');
       setShowRejectModal(null);
       setRejectReason('');
@@ -87,7 +102,7 @@ const AdminOrderDetail = () => {
   const approveFinalMutation = useMutation({
     mutationFn: () => managementAPI.approveFinalPayment(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success('Final payment approved!');
     },
     onError: (error) => {
@@ -98,7 +113,7 @@ const AdminOrderDetail = () => {
   const rejectFinalMutation = useMutation({
     mutationFn: (reason) => managementAPI.rejectFinalPayment(id, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success('Final payment rejected');
       setShowRejectModal(null);
       setRejectReason('');
@@ -111,7 +126,7 @@ const AdminOrderDetail = () => {
   const requestFinalMutation = useMutation({
     mutationFn: () => managementAPI.requestFinalPayment(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success('Final payment request sent to customer!');
     },
     onError: (error) => {
@@ -122,7 +137,7 @@ const AdminOrderDetail = () => {
   const setShippingMutation = useMutation({
     mutationFn: (weightInKg) => managementAPI.setOrderShipping(id, weightInKg),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-order', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
       toast.success('Shipping charges set and customer notified!');
       setShowShippingModal(false);
     },
@@ -130,8 +145,6 @@ const AdminOrderDetail = () => {
       toast.error(error.response?.data?.message || t('messages.error'));
     }
   });
-
-  const order = data?.data?.data;
 
   const onSubmit = (data) => {
     setUpdating(true);

@@ -79,7 +79,7 @@ const Account = () => {
   const addAddressMutation = useMutation({
     mutationFn: (data) => authAPI.addAddress(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['user']);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success(t('messages.addressAdded'));
       setShowAddressForm(false);
       resetAddress();
@@ -92,7 +92,7 @@ const Account = () => {
   const updateAddressMutation = useMutation({
     mutationFn: ({ id, data }) => authAPI.updateAddress(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['user']);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success(t('messages.addressUpdated'));
       setEditingAddress(null);
       resetAddress();
@@ -105,7 +105,7 @@ const Account = () => {
   const deleteAddressMutation = useMutation({
     mutationFn: (id) => authAPI.deleteAddress(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['user']);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success(t('messages.addressDeleted'));
     },
     onError: (error) => {

@@ -72,7 +72,7 @@ const Settings = () => {
   const updateMutation = useMutation({
     mutationFn: (data) => managementAPI.updateSettings(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-settings']);
+      queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
       toast.success(t('admin.settingsUpdated'));
       setLoading(false);
     },

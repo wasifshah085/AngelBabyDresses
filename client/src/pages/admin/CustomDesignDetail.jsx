@@ -58,8 +58,8 @@ const CustomDesignDetail = () => {
   const updateMutation = useMutation({
     mutationFn: (data) => managementAPI.updateCustomDesign(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
-      queryClient.invalidateQueries(['admin-custom-designs']);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-designs'] });
       toast.success(t('admin.designUpdated'));
       setUpdating(false);
     },
@@ -72,7 +72,7 @@ const CustomDesignDetail = () => {
   const messageMutation = useMutation({
     mutationFn: (data) => managementAPI.addDesignMessage(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       setMessage('');
       toast.success('Message sent');
     },
@@ -85,7 +85,7 @@ const CustomDesignDetail = () => {
   const approveAdvanceMutation = useMutation({
     mutationFn: () => managementAPI.approveAdvancePayment(design?.order?._id || design?.order),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success('Advance payment approved!');
     },
     onError: (error) => {
@@ -96,7 +96,7 @@ const CustomDesignDetail = () => {
   const rejectAdvanceMutation = useMutation({
     mutationFn: (reason) => managementAPI.rejectAdvancePayment(design?.order?._id || design?.order, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success('Advance payment rejected');
       setShowRejectModal(null);
       setRejectReason('');
@@ -109,7 +109,7 @@ const CustomDesignDetail = () => {
   const approveFinalMutation = useMutation({
     mutationFn: () => managementAPI.approveFinalPayment(design?.order?._id || design?.order),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success('Final payment approved!');
     },
     onError: (error) => {
@@ -120,7 +120,7 @@ const CustomDesignDetail = () => {
   const rejectFinalMutation = useMutation({
     mutationFn: (reason) => managementAPI.rejectFinalPayment(design?.order?._id || design?.order, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success('Final payment rejected');
       setShowRejectModal(null);
       setRejectReason('');
@@ -133,7 +133,7 @@ const CustomDesignDetail = () => {
   const requestFinalMutation = useMutation({
     mutationFn: () => managementAPI.requestFinalPayment(design?.order?._id || design?.order),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success('Final payment request sent to customer!');
     },
     onError: (error) => {
@@ -144,7 +144,7 @@ const CustomDesignDetail = () => {
   const setShippingMutation = useMutation({
     mutationFn: (weightInKg) => managementAPI.setOrderShipping(design?.order?._id || design?.order, weightInKg),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success('Shipping charges set and customer notified!');
       setShowShippingModal(false);
     },
@@ -156,7 +156,7 @@ const CustomDesignDetail = () => {
   const updateOrderMutation = useMutation({
     mutationFn: (data) => managementAPI.updateOrderStatus(design?.order?._id || design?.order, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-design', id]);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-design', id] });
       toast.success(t('admin.orderUpdated'));
       setUpdating(false);
     },

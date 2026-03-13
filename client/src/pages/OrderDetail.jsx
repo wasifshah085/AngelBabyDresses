@@ -82,7 +82,7 @@ const ReviewSection = ({ order, t }) => {
       setComment('');
       setTitle('');
       setImages([]);
-      queryClient.invalidateQueries(['order', order._id]);
+      queryClient.invalidateQueries({ queryKey: ['order', order._id] });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to submit review');
@@ -312,7 +312,7 @@ const OrderDetail = () => {
   const cancelMutation = useMutation({
     mutationFn: () => ordersAPI.cancel(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['order', id]);
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
       toast.success(t('orders.cancelSuccess'));
     },
     onError: (error) => {
@@ -323,7 +323,7 @@ const OrderDetail = () => {
   const advancePaymentMutation = useMutation({
     mutationFn: (file) => ordersAPI.submitAdvancePayment(id, file),
     onSuccess: () => {
-      queryClient.invalidateQueries(['order', id]);
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
       toast.success(t('orders.paymentSubmitted') || 'Payment submitted! Waiting for verification.');
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -338,7 +338,7 @@ const OrderDetail = () => {
   const finalPaymentMutation = useMutation({
     mutationFn: (file) => ordersAPI.submitFinalPayment(id, file),
     onSuccess: () => {
-      queryClient.invalidateQueries(['order', id]);
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
       toast.success(t('orders.paymentSubmitted') || 'Payment submitted! Waiting for verification.');
       setSelectedFile(null);
       setPreviewUrl(null);

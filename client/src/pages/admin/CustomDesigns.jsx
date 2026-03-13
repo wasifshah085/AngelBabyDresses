@@ -49,7 +49,7 @@ const CustomDesigns = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, status }) => managementAPI.updateCustomDesign(id, { status }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-custom-designs']);
+      queryClient.invalidateQueries({ queryKey: ['admin-custom-designs'] });
       toast.success(t('admin.designUpdated'));
     },
     onError: (error) => {
